@@ -882,7 +882,7 @@ function addDevice(req, res) {
   try {
     const checkDeviceQuery = 'SELECT * FROM tms_devices WHERE DeviceUID = ?';
     const insertDeviceQuery = 'INSERT INTO tms_devices (DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName, IssueDate, SMS, email, type, DeviceType, endDate) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 365 DAY))';
-    const insertActualDataQuery = 'INSERT INTO actual_data (DeviceUID, Temperature, Timestamp, TemperatureR, TemperatureY, TemperatureB, Humidity, flowRate, totalVolume) VALUES (?, null, NOW(), null, null, null, null, null, null)';
+    const insertActualDataQuery = 'INSERT INTO actual_data (DeviceUID, Temperature, TimeStamp, TemperatureR, TemperatureY, TemperatureB, Humidity, flowRate, totalVolume) VALUES (?, null, NOW(), null, null, null, null, null, null)';
 
     db.query(checkDeviceQuery, [DeviceUID], (error, checkResult) => {
       if (error) {
