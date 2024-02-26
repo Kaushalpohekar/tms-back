@@ -845,12 +845,44 @@ function addDeviceTrigger(req, res) {
     }
 }
 
+// function addDevice(req, res) {
+//   const { DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName, SMS, email, type, DeviceType } = req.body;
+
+//   try {
+//     const checkDeviceQuery = 'SELECT * FROM tms_devices WHERE DeviceUID = ?';
+//     const insertDeviceQuery = 'INSERT INTO tms_devices (DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName, IssueDate, SMS, email, type, DeviceType, endDate) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 365 DAY))';
+
+//     db.query(checkDeviceQuery, [DeviceUID], (error, checkResult) => {
+//       if (error) {
+//         console.error('Error while checking device:', error);
+//         return res.status(500).json({ message: 'Internal server error' });
+//       }
+
+//       if (checkResult.length > 0) {
+//         return res.status(400).json({ message: 'Device already added' });
+//       }
+
+//       db.query(insertDeviceQuery, [DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName, SMS, email, type, DeviceType], (insertError, insertResult) => {
+//         if (insertError) {
+//           console.error('Error while inserting device:', insertError);
+//           return res.status(500).json({ message: 'Internal server error' });
+//         }
+
+//         return res.json({ message: 'Device added successfully!' });
+//       });
+//     });
+//   } catch (error) {
+//     console.error('Error in device check:', error);
+//     res.status(500).json({ message: 'Internal server error' });
+//   }
+// }
 function addDevice(req, res) {
   const { DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName, SMS, email, type, DeviceType } = req.body;
 
   try {
     const checkDeviceQuery = 'SELECT * FROM tms_devices WHERE DeviceUID = ?';
     const insertDeviceQuery = 'INSERT INTO tms_devices (DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName, IssueDate, SMS, email, type, DeviceType, endDate) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 365 DAY))';
+    const insertActualDataQuery = 'INSERT INTO actual_data (DeviceUID, Temperature, Humidity, TemperatureR, TemperatureY, TemperatureB, flowRate, totalVolume, date) VALUES (?, null, null, null, null, null, null, null, DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 30 MINUTE))';
 
     db.query(checkDeviceQuery, [DeviceUID], (error, checkResult) => {
       if (error) {
@@ -868,7 +900,15 @@ function addDevice(req, res) {
           return res.status(500).json({ message: 'Internal server error' });
         }
 
-        return res.json({ message: 'Device added successfully!' });
+        // Insert default values into actual_data table
+        db.query(insertActualDataQuery, [DeviceUID], (actualDataInsertError, actualDataInsertResult) => {
+          if (actualDataInsertError) {
+            console.error('Error while inserting actual data:', actualDataInsertError);
+            return res.status(500).json({ message: 'Internal server error' });
+          }
+
+          return res.json({ message: 'Device added successfully!' });
+        });
       });
     });
   } catch (error) {
@@ -876,6 +916,7 @@ function addDevice(req, res) {
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
 
 function barChartCustom(req, res) {
   const deviceId = req.params.deviceId;
@@ -1388,8 +1429,9 @@ function getWaterConsumptionForDateRange(req, res) {
 function deleteDevice(req, res) {
   try {
     const deviceUID = req.params.deviceUID;
+    
+    // Delete device from tms_devices table
     const deleteDeviceQuery = 'DELETE FROM tms_devices WHERE DeviceUID = ?';
-
     db.query(deleteDeviceQuery, [deviceUID], (error, result) => {
       if (error) {
         console.error('Error deleting device:', error);
@@ -1400,13 +1442,23 @@ function deleteDevice(req, res) {
         return res.status(404).json({ message: 'Device not found' });
       }
 
-      res.json({ message: 'Device deleted successfully' });
+      // Delete related records from tms_triggers table
+      const deleteTriggersQuery = 'DELETE FROM tms_triggers WHERE DeviceUID = ?';
+      db.query(deleteTriggersQuery, [deviceUID], (triggersError, triggersResult) => {
+        if (triggersError) {
+          console.error('Error deleting triggers:', triggersError);
+          return res.status(500).json({ message: 'Internal server error' });
+        }
+
+        res.json({ message: 'Device and related triggers deleted successfully' });
+      });
     });
   } catch (error) {
     console.error('Error deleting device:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
 
 function editUser(req, res) {
   const userId = req.params.userId;
