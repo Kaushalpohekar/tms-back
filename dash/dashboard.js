@@ -845,44 +845,12 @@ function addDeviceTrigger(req, res) {
     }
 }
 
-// function addDevice(req, res) {
-//   const { DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName, SMS, email, type, DeviceType } = req.body;
-
-//   try {
-//     const checkDeviceQuery = 'SELECT * FROM tms_devices WHERE DeviceUID = ?';
-//     const insertDeviceQuery = 'INSERT INTO tms_devices (DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName, IssueDate, SMS, email, type, DeviceType, endDate) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 365 DAY))';
-
-//     db.query(checkDeviceQuery, [DeviceUID], (error, checkResult) => {
-//       if (error) {
-//         console.error('Error while checking device:', error);
-//         return res.status(500).json({ message: 'Internal server error' });
-//       }
-
-//       if (checkResult.length > 0) {
-//         return res.status(400).json({ message: 'Device already added' });
-//       }
-
-//       db.query(insertDeviceQuery, [DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName, SMS, email, type, DeviceType], (insertError, insertResult) => {
-//         if (insertError) {
-//           console.error('Error while inserting device:', insertError);
-//           return res.status(500).json({ message: 'Internal server error' });
-//         }
-
-//         return res.json({ message: 'Device added successfully!' });
-//       });
-//     });
-//   } catch (error) {
-//     console.error('Error in device check:', error);
-//     res.status(500).json({ message: 'Internal server error' });
-//   }
-// }
 function addDevice(req, res) {
   const { DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName, SMS, email, type, DeviceType } = req.body;
 
   try {
     const checkDeviceQuery = 'SELECT * FROM tms_devices WHERE DeviceUID = ?';
     const insertDeviceQuery = 'INSERT INTO tms_devices (DeviceUID, DeviceLocation, DeviceName, CompanyEmail, CompanyName, IssueDate, SMS, email, type, DeviceType, endDate) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 365 DAY))';
-    const insertActualDataQuery = 'INSERT INTO actual_data (DeviceUID, Temperature, TimeStamp, TemperatureR, TemperatureY, TemperatureB, Humidity, flowRate, totalVolume) VALUES (?, null, NOW(), null, null, null, null, null, null)';
 
     db.query(checkDeviceQuery, [DeviceUID], (error, checkResult) => {
       if (error) {
@@ -900,15 +868,7 @@ function addDevice(req, res) {
           return res.status(500).json({ message: 'Internal server error' });
         }
 
-        // Insert default values into actual_data table
-        db.query(insertActualDataQuery, [DeviceUID], (actualDataInsertError, actualDataInsertResult) => {
-          if (actualDataInsertError) {
-            console.error('Error while inserting actual data:', actualDataInsertError);
-            return res.status(500).json({ message: 'Internal server error' });
-          }
-
-          return res.json({ message: 'Device added successfully!' });
-        });
+        return res.json({ message: 'Device added successfully!' });
       });
     });
   } catch (error) {
