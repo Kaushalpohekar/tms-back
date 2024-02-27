@@ -16,19 +16,11 @@ function getRandomNumber(min, max) {
 
 function generateRandomData(deviceId) {
   const DeviceUID = deviceId;
-  const Temperature = getRandomNumber(35, 50).toFixed(1);
-  const Humidity = getRandomNumber(40, 70).toFixed(1);
-  const TemperatureR= getRandomNumber(75, 77).toFixed(1);
-  const TemperatureY= getRandomNumber(80, 82).toFixed(1);
-  const TemperatureB = getRandomNumber(77, 79).toFixed(1);
+  const Humidity = parseFloat(getRandomNumber(40, 70).toFixed(1));
 
   const data = {
     DeviceUID,
-    Temperature,
     Humidity,
-    TemperatureR,
-    TemperatureY,
-    TemperatureB
   };
 
   return JSON.stringify(data);
@@ -39,8 +31,8 @@ const client = mqtt.connect(brokerOptions);
 client.on('connect', () => {
   console.log('Connected to MQTT broker');
 
-  const deviceId = `SL02202399`;
-    const topic = `sense/live/${deviceId}`;
+  const deviceId = `SL02202348`;
+    const topic = `Sense/Live/${deviceId}`;
 
     setInterval(() => {
       const message = generateRandomData(deviceId);
