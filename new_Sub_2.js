@@ -5,7 +5,7 @@ const os = require('os');
 const broker = 'ws://dashboard.senselive.in:9001';
 
 const mysqlConfig = {
-  host: '13.200.38.129',
+  host: '13.232.174.80',
   user: 'mysql',
   password: 'sense!123',
   database: 'tms',
