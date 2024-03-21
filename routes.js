@@ -57,6 +57,16 @@ router.put('/edit-User/:userId', dashboard.editUser);
 
 router.get('/avginterval/:id/:interval',dashboard.avg_interval);
 router.get('/FetchTodayConsumption/:deviceId', dashboard.fetchDeviceTotal);
+router.put('/editDeviceFromSetting/:deviceId', dashboard.editDeviceFromSetting);
+
+
+router.get('/getTriggerDataForAlert/:CompanyEmail',dashboard.getTriggerData);
+router.put('/updateTrigger/:DeviceUID',dashboard.updateTrigger);
+router.delete('/deletetrigger/:DeviceUID',dashboard.deletetriggeruser);
+router.put('/UpdateWhatsapp/:DeviceUID',dashboard.UpdateWhatsapp);
+router.put('/UpdateMail/:DeviceUID',dashboard.UpdateMail);
+
+
 
 //SA
 router.get('/fetchAllDevices', SA.fetchAllDevices);

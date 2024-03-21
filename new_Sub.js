@@ -4,11 +4,18 @@ const os = require('os');
 
 const broker = 'ws://dashboard.senselive.in:9001';
 
+// const mysqlConfig = {
+//   host: '13.200.38.129',
+//   user: 'mysql',
+//   password: 'sense!123',
+//   database: 'tms',
+//   port: 3306,
+// };
 const mysqlConfig = {
-  host: '13.200.38.129',
-  user: 'mysql',
-  password: 'sense!123',
-  database: 'tms',
+  host: '52.66.107.247',
+  user: 'senselive',
+  password: 'sense123',
+  database: 'vert',
   port: 3306,
 };
 
@@ -40,7 +47,7 @@ const mqttClient = mqtt.connect(broker, options);
 
 mqttClient.on('connect', () => {
   console.log('Connected to MQTT broker');
-  mqttClient.subscribe('Sense/#', (error) => {
+  mqttClient.subscribe('Sense/Live/ABCSD', (error) => {
     if (error) {
       console.error('Error subscribing to all topics:', error);
     } else {
@@ -55,7 +62,7 @@ mqttClient.on('message', (topic, message) => {
 
     const insertQuery = `
     INSERT INTO actual_data (DeviceUID, Temperature, Timestamp, TemperatureR, TemperatureY, TemperatureB, Humidity, flowRate, Pressure, totalVolume, ip_address)
-    VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const insertValues = [

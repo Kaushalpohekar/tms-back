@@ -44,7 +44,7 @@ client.on('connect', () => {
       const message = generateRandomData(deviceId);
       client.publish(topic, message);
       console.log("publish for ", topic, message);
-    }, 20000);
+    }, 2000);
 });
 
 client.on('error', (error) => {

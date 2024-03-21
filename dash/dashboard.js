@@ -1532,6 +1532,144 @@ function fetchDeviceTotal(req, res){
    }
 }
 
+function editDeviceFromSetting(req, res) {
+  const deviceId = req.params.deviceId;
+  const { DeviceLocation, DeviceName, DeviceTrigger, DeviceType } = req.body;
+  const deviceCheckQuery = 'SELECT * FROM tms_devices WHERE DeviceUID = ?';
+
+  db.query(deviceCheckQuery, [deviceId], (error, deviceCheckResult) => {
+    if (error) {
+      console.error('Error during device check:', error);
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+
+    try {
+      if (deviceCheckResult.length === 0) {
+        console.log('Device not found!');
+        return res.status(400).json({ message: 'Device not found!' });
+      }
+
+      const devicesQuery = 'UPDATE tms_devices SET DeviceLocation = ?, DeviceName = ?, DeviceType = ? WHERE DeviceUID = ?';
+      const devicesTriggerQuery = 'UPDATE tms_trigger SET TriggerValue = ? WHERE DeviceUID = ?';
+
+      db.query(devicesQuery, [DeviceLocation, DeviceName, DeviceType, deviceId], (error, devicesResult) => {
+        if (error) {
+          console.error('Error updating device:', error);
+          return res.status(500).json({ message: 'Internal server error' });
+        }
+
+        db.query(devicesTriggerQuery, [DeviceTrigger, deviceId], (error, triggerResult) => {
+          if (error) {
+            console.error('Error updating trigger:', error);
+            return res.status(500).json({ message: 'Internal server error' });
+          }
+
+          res.json({ message: 'Device Updated Successfully' });
+        });
+      });
+    } catch (error) {
+      console.error('Error updating device:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+}
+
+function getTriggerData(req,res){
+  const CompanyEmail = req.params.CompanyEmail;
+
+  const getquery = 'SELECT * FROM tms_trigger WHERE CompanyEmail=?';
+
+  try{
+    db.query(getquery,[CompanyEmail],(error,getresult)=>{
+      if(error){
+        console.error('Error getting user data:',error);
+        return res.status(500).json({message:'Internet server error'});
+      }
+      res.status(200).json(getresult);
+    })
+  }
+  catch(error){
+    console.error('Error occured check:',error)
+    res.status(500).json({message:'Error in fetching data'})
+  }
+}
+
+function updateTrigger(req, res) {
+  const DeviceUID = req.params.DeviceUID;
+
+  const { PersonalEmail, TriggerValue, ContactNO, DeviceName, interval } = req.body;
+
+  const updateUserQuery = `
+    UPDATE tms_trigger 
+    SET PersonalEmail=?, TriggerValue=?, ContactNO=?, DeviceName=?, \`interval\`=?
+    WHERE DeviceUID=?
+  `;
+
+  try {
+    db.query(updateUserQuery, [PersonalEmail, TriggerValue, ContactNO, DeviceName, interval, DeviceUID], (UpdateUserError, updateUserResult) => {
+      if (UpdateUserError) {
+        console.error('Error updating User data:', UpdateUserError);
+        return res.status(500).json({ message: 'Internal server error' });
+      }
+      res.status(200).json(updateUserResult);
+    });
+  } catch (error) {
+    console.error('Error occurred:', error);
+    res.status(500).json({ message: 'Error updating User data' });
+  }
+}
+
+
+
+
+function deletetriggeruser(req,res){
+
+  const DeviceUID = req.params.DeviceUID;
+  const deletequery = 'DELETE FROM tms_trigger WHERE DeviceUID=?';
+  db.query(deletequery, [DeviceUID], (error) => {
+    if (error) {
+      console.error('Error deleting data:', error);
+      res.status(404).send('error occured');
+      return;
+    }
+    res.json({ message: 'Device Trigger deleted successfully' });
+  }) 
+
+}
+
+
+
+
+function UpdateWhatsapp(req, res) {
+  const DeviceUID = req.params.DeviceUID;
+  const { Whatsapp } = req.body;
+
+    const UpdateWhatsappQuery =  'UPDATE tms_trigger SET Whatsapp = ? WHERE DeviceUID = ?';
+
+      db.query(UpdateWhatsappQuery, [Whatsapp , DeviceUID ], (UpdateWhatsappError, UpdateWhatsappResult) => {
+      if (UpdateWhatsappError) {
+        console.log(UpdateWhatsappError);
+        return res.status(401).json({ message: 'error during updating Whatsapp ',UpdateWhatsappError});
+      }
+      res.status(200).json({ message: 'Whatsapp Updated Successfully' });
+    });
+}
+
+
+function UpdateMail(req, res) {
+  const DeviceUID = req.params.DeviceUID;
+  const { Mail }= req.body;
+    const UpdateMailQuery = 'UPDATE tms_trigger SET Mail = ? WHERE DeviceUID = ?';
+
+      db.query(UpdateMailQuery, [Mail , DeviceUID ], (UpdateMailError, UpdateMailResult) => {
+      if (UpdateMailError) {
+        console.log(UpdateMailError);
+        return res.status(401).json({ message: 'error during updating Mail ',UpdateMailError});
+      }
+      res.status(200).json({ message: 'Mail Updated Successfully' });
+  });
+}
+
 
 
 module.exports = {
@@ -1569,5 +1707,11 @@ module.exports = {
   editUser,
   fetchLatestEntry,
   avg_interval,
-  fetchDeviceTotal
+  fetchDeviceTotal,
+  editDeviceFromSetting,
+  getTriggerData,
+  updateTrigger,
+  deletetriggeruser,
+  UpdateWhatsapp,
+  UpdateMail
 };
