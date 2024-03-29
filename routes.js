@@ -67,6 +67,8 @@ router.put('/UpdateWhatsapp/:DeviceUID',dashboard.UpdateWhatsapp);
 router.put('/UpdateMail/:DeviceUID',dashboard.UpdateMail);
 
 
+router.get('/lastalerts/:DeviceUID',dashboard.last5alerts);
+
 
 //SA
 router.get('/fetchAllDevices', SA.fetchAllDevices);
