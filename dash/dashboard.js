@@ -1161,80 +1161,6 @@ function getTotalVolumeForMonth(req, res) {
   }
 }
 
-// function getTotalVolumeForMonthEmail(req, res) {
-//   const { CompanyEmail } = req.params;
-
-//   try {
-//     // Fetch devices for the given company email
-//     const fetchDevicesQuery = 'SELECT * FROM tms_devices WHERE CompanyEmail = ? AND DeviceType = "ws"';
-//     db.query(fetchDevicesQuery, [CompanyEmail], (fetchError, devices) => {
-//       if (fetchError) {
-//         console.error('Error while fetching devices:', fetchError);
-//         return res.status(500).json({ message: 'Internal server error' });
-//       }
-
-//       // Array to store the consumption data for each device
-//       const consumptionData = [];
-
-//       // Iterate through each device
-//       devices.forEach(device => {
-//         const deviceId = device.DeviceUID;
-
-//         try {
-//           // Fetch the sum of totalVolume for the current month
-//           const fetchCurrentMonthTotalVolumeQuery = `
-//             SELECT SUM(totalVolume) AS currentMonthTotalVolume
-//             FROM tms_Day_Consumption 
-//             WHERE DeviceUID = ? AND MONTH(TimeStamp) = MONTH(CURDATE())
-//           `;
-
-//           db.query(fetchCurrentMonthTotalVolumeQuery, [deviceId], (fetchCurrentMonthError, fetchCurrentMonthResult) => {
-//             if (fetchCurrentMonthError) {
-//               console.error('Error while fetching current month total volume:', fetchCurrentMonthError);
-//               return res.status(500).json({ message: 'Internal server error' });
-//             }
-
-//             const currentMonthTotalVolume = fetchCurrentMonthResult[0].currentMonthTotalVolume || 0;
-
-//             // Fetch the sum of totalVolume for the previous month
-//             const fetchPreviousMonthTotalVolumeQuery = `
-//               SELECT SUM(totalVolume) AS previousMonthTotalVolume
-//               FROM tms_Day_Consumption 
-//               WHERE DeviceUID = ? AND MONTH(TimeStamp) = MONTH(CURDATE() - INTERVAL 1 MONTH)
-//             `;
-
-//             db.query(fetchPreviousMonthTotalVolumeQuery, [deviceId], (fetchPreviousMonthError, fetchPreviousMonthResult) => {
-//               if (fetchPreviousMonthError) {
-//                 console.error('Error while fetching previous month total volume:', fetchPreviousMonthError);
-//                 return res.status(500).json({ message: 'Internal server error' });
-//               }
-
-//               const previousMonthTotalVolume = fetchPreviousMonthResult[0].previousMonthTotalVolume || 0;
-
-//               consumptionData.push({
-//                 [device.DeviceUID]: [
-//                   { thisMonth: currentMonthTotalVolume, lastMonth: previousMonthTotalVolume }
-//                 ]
-//               });
-
-//               // If all devices have been processed, send the response
-//               if (consumptionData.length === devices.length) {
-//                 return res.json(consumptionData);
-//               }
-//             });
-//           });
-//         } catch (error) {
-//           console.error('Error in device retrieval:', error);
-//           res.status(500).json({ message: 'Internal server error' });
-//         }
-//       });
-//     });
-//   } catch (error) {
-//     console.error('Error in device retrieval:', error);
-//     res.status(500).json({ message: 'Internal server error' });
-//   }
-// }
-
 function getTotalVolumeForMonthEmail(req, res) {
   const { CompanyEmail } = req.params;
 
@@ -1638,8 +1564,6 @@ function deletetriggeruser(req,res){
 }
 
 
-
-
 function UpdateWhatsapp(req, res) {
   const DeviceUID = req.params.DeviceUID;
   const { Whatsapp } = req.body;
@@ -1669,7 +1593,6 @@ function UpdateMail(req, res) {
       res.status(200).json({ message: 'Mail Updated Successfully' });
   });
 }
-
 
 
 module.exports = {
