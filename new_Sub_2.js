@@ -65,9 +65,9 @@ mqttClient.on('message', (topic, message) => {
       data.TemperatureY,
       data.TemperatureB,
       data.Humidity,
-      data.flowRate,
+      data.flowRate || data.FlowRate,
       data.Pressure,
-      data.totalVolume,
+      data.totalVolume || data.Totalizer,
       localIpAddress,
     ];
 

@@ -47,7 +47,7 @@ const mqttClient = mqtt.connect(broker, options);
 
 mqttClient.on('connect', () => {
   console.log('Connected to MQTT broker');
-  mqttClient.subscribe('Sense/Live/ABCSD', (error) => {
+  mqttClient.subscribe('Sense/#', (error) => {
     if (error) {
       console.error('Error subscribing to all topics:', error);
     } else {
@@ -78,6 +78,7 @@ mqttClient.on('message', (topic, message) => {
       localIpAddress,
     ];
 
+    
     mysqlPool.query(insertQuery, insertValues, (error) => {
       if (error) {
         console.error('Error inserting data into MySQL:', error);

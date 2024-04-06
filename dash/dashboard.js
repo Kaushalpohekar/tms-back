@@ -1595,6 +1595,66 @@ function UpdateMail(req, res) {
 }
 
 
+// function last5alerts(req,res){
+//   const DeviceUID = req.params.DeviceUID;
+//   const mailquery=`SELECT TimeStamp, Temperature
+//   FROM actual_data
+//   WHERE DeviceUID = ? 
+//     AND Temperature >= (
+//       SELECT TriggerValue 
+//       FROM tms_trigger 
+//       WHERE DeviceUID = ?
+//     )
+//   ORDER BY TimeStamp DESC
+//   LIMIT 5;`;
+//   db.query(mailquery,[DeviceUID,DeviceUID],(err,results)=>{
+//     if(err){
+//       console.error('Error fething data',err);
+//       res.status(404).send('error occured');
+//       return;
+//     }
+//     res.status(200).json(results);
+
+//   })
+// }
+
+function last5alerts(req, res) {
+  const DeviceUID = req.params.DeviceUID;
+  const triggerValueQuery = `SELECT TriggerValue FROM tms_trigger WHERE DeviceUID = ?;`;
+
+  // Fetch the trigger value first
+  db.query(triggerValueQuery, [DeviceUID], (err, triggerValueResult) => {
+    if (err) {
+      console.error('Error fetching trigger value', err);
+      return res.status(500).send('Error occurred');
+    }
+
+    if (triggerValueResult.length === 0) {
+      return res.status(404).send('Trigger value not found');
+    }
+
+    const TriggerValue = triggerValueResult[0].TriggerValue;
+
+    // Combine the four temperature parameters into the WHERE clause
+    const query = `
+      SELECT TimeStamp, Temperature, TemperatureR, TemperatureY, TemperatureB
+      FROM actual_data 
+      WHERE DeviceUID = ? AND (Temperature >= ? OR TemperatureR >= ? OR TemperatureY >= ? OR TemperatureB >= ?)
+      ORDER BY TimeStamp 
+      LIMIT 5;`;
+
+    db.query(query, [DeviceUID, TriggerValue, TriggerValue, TriggerValue, TriggerValue], (err, results) => {
+      if (err) {
+        console.error('Error fetching data', err);
+        return res.status(500).send('Error occurred');
+      }
+      // Send the results back as JSON
+      res.status(200).json(results);
+    });
+  });
+}
+
+
 module.exports = {
   userDevices,
   editDevice,
@@ -1636,5 +1696,6 @@ module.exports = {
   updateTrigger,
   deletetriggeruser,
   UpdateWhatsapp,
-  UpdateMail
+  UpdateMail,
+  last5alerts,
 };
