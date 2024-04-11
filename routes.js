@@ -3,6 +3,7 @@ const router = express.Router();
 const authentication = require('./auth/authentication');
 const dashboard = require('./dash/dashboard.js');
 const SA = require('./superadmin/SA.js');
+const alert = require('./dash/alert.js');
 //const graph=require('./graph');
 
 // Registration route
@@ -103,5 +104,8 @@ router.get('/notification', SA.notification);
 // router.get('/telementrydata', SA.telementrydata);
 
 
+/*-------------ALERT-----------*/
 
+router.get('/forAlertData', alert.fetchLatestEntry);
+router.get('/forAlertSend', alert.fetchLastSendMsgTime);
 module.exports = router;
