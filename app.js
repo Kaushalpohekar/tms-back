@@ -18,7 +18,12 @@ app.use(bodyParser.json());
 //app.use(SA.log);
 
 // Use the router for handling routes
-app.use(router);
+//app.use(router);
+app.use('/api', router);
+app.get('/api/test', (req, res) => {
+  console.log('Received GET request to /api/example');
+  res.send('Response from Node.js server');
+});
 
 // Start the server
 app.listen(port, () => {
