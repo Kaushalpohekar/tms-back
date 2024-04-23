@@ -4,7 +4,7 @@ const os = require('os');
 
 const broker = 'ws://dashboard.senselive.in:9001';
 
-const mysqlConfig = {
+const mySqlConfig = {
   host: '13.232.174.80',
   user: 'mysql',
   password: 'sense!123',
@@ -12,7 +12,7 @@ const mysqlConfig = {
   port: 3306,
 };
 
-const mysqlPool = mysql.createPool(mysqlConfig);
+const mysqlPool = mysql.createPool(mySqlConfig);
 
 const localIpAddress = getLocalIpAddress();
 

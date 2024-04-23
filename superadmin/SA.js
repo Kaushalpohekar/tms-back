@@ -1,12 +1,5 @@
-// const bcrypt = require('bcrypt');
 const db = require('../db');
-// const jwtUtils = require('../token/jwtUtils');
-// const CircularJSON = require('circular-json');
 const secure = require('../token/secure');
-// const nodemailer = require('nodemailer');
-// const fs = require('fs');
-// const path = require('path');
-// const ejs = require('ejs');
 
 function fetchAllUsers(req, res) {
     try {
