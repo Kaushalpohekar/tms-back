@@ -13,7 +13,7 @@ function userDevices(req, res) {
 
     try {
       if (userCheckResult.length === 0) {
-        console.log('User not found!');
+                                                     
         return res.status(400).json({ message: 'User not found!' });
       }
 
@@ -47,7 +47,6 @@ function editDevice(req, res) {
 
     try {
       if (deivceCheckResult.length === 0) {
-        console.log('User not found!');
         return res.status(400).json({ message: 'Device not found!' });
       }
 
@@ -81,7 +80,6 @@ function companyDetails(req, res) {
 
     try {
       if (useridCheckResult.length === 0) {
-        console.log('User not found!');
         return res.status(400).json({ message: 'User not found!' });
       }
 
@@ -115,7 +113,6 @@ function personalDetails(req, res) {
 
     try {
       if (useridCheckResult.length === 0) {
-        console.log('User not found!');
         return res.status(400).json({ message: 'User not found!' });
       }
 
@@ -150,7 +147,6 @@ function updatePassword(req, res) {
       }
 
       if (useridCheckResult.length === 0) {
-        console.log('User not found!');
         return res.status(400).json({ message: 'User not found!' });
       }
 
@@ -383,6 +379,54 @@ function getDataByTimeInterval(req, res) {
           bucket_start_time;`;
         break;
 
+        case '6month':
+          sql = `
+          SELECT
+            DeviceUID,
+            FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(TimeStamp) / (60 * 60)) * (60 * 60)) AS bucket_start_time,
+            ROUND(AVG(Temperature), 1) AS Temperature,
+            ROUND(AVG(Humidity), 1) AS Humidity,
+            ROUND(AVG(flowRate), 1) AS flowRate,
+            ROUND(AVG(TemperatureR), 1) AS TemperatureR,
+            ROUND(AVG(TemperatureB), 1) AS TemperatureB,
+            ROUND(AVG(TemperatureY), 1) AS TemperatureY,
+            ROUND(AVG(Pressure), 1) AS Pressure
+          FROM
+            actual_data
+          WHERE
+            DeviceUID = ? AND TimeStamp >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+          GROUP BY
+            DeviceUID,
+            bucket_start_time
+          ORDER BY
+            DeviceUID,
+            bucket_start_time;`;
+          break;
+
+        case '12month':
+          sql = `
+          SELECT
+            DeviceUID,
+            FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(TimeStamp) / (120 * 60)) * (120 * 60)) AS bucket_start_time,
+            ROUND(AVG(Temperature), 1) AS Temperature,
+            ROUND(AVG(Humidity), 1) AS Humidity,
+            ROUND(AVG(flowRate), 1) AS flowRate,
+            ROUND(AVG(TemperatureR), 1) AS TemperatureR,
+            ROUND(AVG(TemperatureB), 1) AS TemperatureB,
+            ROUND(AVG(TemperatureY), 1) AS TemperatureY,
+            ROUND(AVG(Pressure), 1) AS Pressure
+          FROM
+            actual_data
+          WHERE
+            DeviceUID = ? AND TimeStamp >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+          GROUP BY
+            DeviceUID,
+            bucket_start_time
+          ORDER BY
+            DeviceUID,
+            bucket_start_time;`;
+          break;
+
       default:
         return res.status(400).json({ message: 'Invalid time interval' });
     }
@@ -557,9 +601,11 @@ function getDataByCustomDate(req, res) {
           AVG(Humidity) AS Humidity,
           AVG(flowRate) AS flowRate,
           AVG(TemperatureR) AS TemperatureR,
-          AVG(TemperatureB) AS TemperatureB,
+          AVG(TemperatureB) AS TemperatureB ,
           AVG(TemperatureY) AS TemperatureY,
-          ROUND(AVG(Pressure), 1) AS Pressure
+          ROUND(AVG(Pressure), 1) AS Pressure,
+          MAX(totalVolume) AS Totalizer,
+          MAX(totalVolume) - MIN(totalVolume) AS totalVolume
         FROM
           actual_data
         WHERE
@@ -570,7 +616,7 @@ function getDataByCustomDate(req, res) {
         ORDER BY
           DeviceUID,
           bucket_start_time`;
-    const sql2 = `SELECT * FROM actual_data WHERE DeviceUID = ? AND TimeStamp >= ? AND TimeStamp <= ?`;
+    //const sql2 = `SELECT * FROM actual_data WHERE DeviceUID = ? AND TimeStamp >= ? AND TimeStamp <= ?`;
     db.query(sql, [deviceId, startDate + 'T00:00:00.000Z', endDate + 'T23:59:59.999Z'], (fetchError, results) => {
       if (fetchError) {
         // console.error('Error fetching data:', error);
@@ -976,79 +1022,6 @@ function getTotalVolumeForToday(req, res) {
   }
 }
 
-// function getTotalVolumeForTodayEmail(req, res) {
-//   const { CompanyEmail } = req.params;
-
-//   try {
-//     // Fetch devices for the given company email
-//     const fetchDevicesQuery = 'SELECT * FROM tms_devices WHERE CompanyEmail = ? AND DeviceType = "ws"';
-//     db.query(fetchDevicesQuery, [CompanyEmail], (fetchError, devices) => {
-//       if (fetchError) {
-//         console.error('Error while fetching devices:', fetchError);
-//         return res.status(500).json({ message: 'Internal server error' });
-//       }
-
-//       // Array to store the consumption data for each device
-//       const consumptionData = [];
-
-//       // Iterate through each device
-//       devices.forEach(device => {
-//         const deviceId = device.DeviceUID;
-
-//         try {
-//           // Fetch the latest entry for the current day
-//           const fetchCurrentDayEntryQuery = `
-//             SELECT * FROM tms_Day_Consumption 
-//             WHERE DeviceUID = ? AND DATE(TimeStamp) = CURDATE()
-//             ORDER BY TimeStamp DESC LIMIT 1
-//           `;
-
-//           db.query(fetchCurrentDayEntryQuery, [deviceId], (fetchCurrentDayError, fetchCurrentDayResult) => {
-//             if (fetchCurrentDayError) {
-//               console.error('Error while fetching current day entry:', fetchCurrentDayError);
-//               return res.status(500).json({ message: 'Internal server error' });
-//             }
-
-//             const todayConsumption = fetchCurrentDayResult.length > 0 ? fetchCurrentDayResult[0].totalVolume : 0;
-
-//             // Fetch the latest entry for the previous day
-//             const fetchPreviousDayEntryQuery = `
-//               SELECT * FROM tms_Day_Consumption 
-//               WHERE DeviceUID = ? AND DATE(TimeStamp) = CURDATE() - INTERVAL 1 DAY
-//               ORDER BY TimeStamp DESC LIMIT 1
-//             `;
-
-//             db.query(fetchPreviousDayEntryQuery, [deviceId], (fetchPreviousDayError, fetchPreviousDayResult) => {
-//               if (fetchPreviousDayError) {
-//                 console.error('Error while fetching previous day entry:', fetchPreviousDayError);
-//                 return res.status(500).json({ message: 'Internal server error' });
-//               }
-
-//               const yesterdayConsumption = fetchPreviousDayResult.length > 0 ? fetchPreviousDayResult[0].totalVolume : 0;
-
-//               consumptionData.push({
-//                 [device.DeviceUID]: [
-//                   { today: todayConsumption, yesterday: yesterdayConsumption }
-//                 ]
-//               });
-
-//               // If all devices have been processed, send the response
-//               if (consumptionData.length === devices.length) {
-//                 return res.json(consumptionData);
-//               }
-//             });
-//           });
-//         } catch (error) {
-//           console.error('Error in device retrieval:', error);
-//           res.status(500).json({ message: 'Internal server error' });
-//         }
-//       });
-//     });
-//   } catch (error) {
-//     console.error('Error in device retrieval:', error);
-//     res.status(500).json({ message: 'Internal server error' });
-//   }
-// }
 
 function getTotalVolumeForTodayEmail(req, res) {
   const { CompanyEmail } = req.params;
@@ -1232,71 +1205,6 @@ function getTotalVolumeForMonthEmail(req, res) {
 }
 
 
-// function getTotalVolumeForDuration(req, res) {
-//   const { deviceId } = req.params;
-//   const { interval } = req.query;
-
-//   try {
-
-//     let duration;
-//     switch (interval) {
-//       case '30sec':
-//         duration = 'INTERVAL 1 DAY';
-//         break;
-//       case '1min':
-//         duration = 'INTERVAL 1 DAY';
-//         break;
-//       case '2min':
-//         duration = 'INTERVAL 1 DAY';
-//         break;
-//       case '5min':
-//         duration = 'INTERVAL 1 DAY';
-//         break;
-//       case '10min':
-//         duration = 'INTERVAL 1 DAY';
-//         break;
-//       case '30min':
-//         duration = 'INTERVAL 1 DAY';
-//         break;
-//       case '1hour':
-//         duration = 'INTERVAL 1 DAY';
-//         break;
-//       case '2hour':
-//         duration = 'INTERVAL 1 DAY';
-//         break;
-//       case '10hour':
-//         duration = 'INTERVAL 1 DAY';
-//         break;
-//       case '12hour':
-//         duration = 'INTERVAL 1 DAY';
-//         break;
-//       case '1day':
-//         duration = 'INTERVAL 1 DAY';
-//         break;
-//       case '7day':
-//         duration = 'INTERVAL 7 DAY';
-//         break;
-//       case '30day':
-//         duration = 'INTERVAL 30 DAY';
-//         break;
-//       default:
-//         return res.status(400).json({ message: 'Invalid time interval' });
-//     }
-
-//     const sql = `SELECT * FROM tms_Day_Consumption WHERE DeviceUID = ? AND TimeStamp >= DATE_SUB(NOW(), ${duration})`;
-//     db.query(sql, [deviceId], (error, results) => {
-//       if (error) {
-//         console.error('Error fetching data:', error);
-//         return res.status(500).json({ message: 'Internal server error' });
-//       }
-//       res.json({ data: results });
-//     });
-//   } catch (error) {
-//     console.error('Error in device retrieval:', error);
-//     res.status(500).json({ message: 'Internal server error' });
-//   }
-// }
-
 function getTotalVolumeForDuration(req, res) {
   const { deviceId } = req.params;
   const { interval } = req.query;
@@ -1389,6 +1297,40 @@ function getTotalVolumeForDuration(req, res) {
           DeviceUID,
           TimeStamp;`
         break;
+      case '6month':
+        sql = `
+        SELECT
+          DeviceUID,
+          DATE_FORMAT(TimeStamp, '%Y-%m') AS TimeStamp,
+          MAX(totalVolume) - MIN(totalVolume) AS totalVolume
+        FROM
+          actual_data
+        WHERE
+          DeviceUID = ? AND TimeStamp >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+        GROUP BY
+          DeviceUID,
+          DATE_FORMAT(TimeStamp, '%Y-%m')
+        ORDER BY
+          DeviceUID,
+          TimeStamp;`
+        break;
+      case '12month':
+        sql = `
+        SELECT
+          DeviceUID,
+          DATE_FORMAT(TimeStamp, '%Y-%m') AS TimeStamp,
+          MAX(totalVolume) - MIN(totalVolume) AS totalVolume
+        FROM
+          actual_data
+        WHERE
+          DeviceUID = ? AND TimeStamp >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+        GROUP BY
+          DeviceUID,
+          DATE_FORMAT(TimeStamp, '%Y-%m')
+        ORDER BY
+          DeviceUID,
+          TimeStamp;`
+        break;
       default:
         return res.status(400).json({ message: 'Invalid time interval' });
     }
@@ -1411,9 +1353,9 @@ function getWaterConsumptionForDateRange(req, res) {
 
   try {
     // Fetch entries within the specified date range
-    const fetchEntriesQuery = 'SELECT * FROM actual_data WHERE DeviceUID = ? AND DATE(TimeStamp) BETWEEN ? AND ? ORDER BY TimeStamp ASC';
+    const fetchEntriesQuery = 'SELECT DeviceUID, DATE(FROM_UNIXTIME(UNIX_TIMESTAMP(TimeStamp))) AS TimeStamp, MAX(totalVolume) - MIN(totalVolume) AS totalVolume FROM actual_data WHERE DeviceUID = ? AND TimeStamp >= ? AND TimeStamp <= ? GROUP BY DeviceUID, DATE(FROM_UNIXTIME(UNIX_TIMESTAMP(TimeStamp))) ORDER BY DeviceUID, TimeStamp;';
       
-    db.query(fetchEntriesQuery, [deviceId, startDate, endDate], (fetchError, fetchResult) => {
+    db.query(fetchEntriesQuery, [deviceId, startDate + ' 00:00:00', endDate + ' 23:59:59'], (fetchError, fetchResult) => {
       if (fetchError) {
         console.error('Error while fetching entries:', fetchError);
         return res.status(500).json({ message: 'Internal server error' });
@@ -1474,7 +1416,6 @@ function editUser(req, res) {
 
     try {
       if (UserCheckResult.length === 0) {
-        console.log('User not found!');
         return res.status(400).json({ message: 'User not found!' });
       }
 
@@ -1513,7 +1454,6 @@ function fetchLatestEntry(req, res) {
     ip_address: "0.0.0.0",
     status: null
   };
-  console.log(defaultEntry);
 
   db.query(fetchUserDevicesQuery, [companyEmail], (fetchUserDevicesError, devices) => {
     if (fetchUserDevicesError) {
@@ -1580,7 +1520,6 @@ function editDeviceFromSetting(req, res) {
 
     try {
       if (deviceCheckResult.length === 0) {
-        console.log('Device not found!');
         return res.status(400).json({ message: 'Device not found!' });
       }
 
@@ -1681,7 +1620,6 @@ function UpdateWhatsapp(req, res) {
 
       db.query(UpdateWhatsappQuery, [Whatsapp , DeviceUID ], (UpdateWhatsappError, UpdateWhatsappResult) => {
       if (UpdateWhatsappError) {
-        console.log(UpdateWhatsappError);
         return res.status(401).json({ message: 'error during updating Whatsapp ',UpdateWhatsappError});
       }
       res.status(200).json({ message: 'Whatsapp Updated Successfully' });
@@ -1696,36 +1634,11 @@ function UpdateMail(req, res) {
 
       db.query(UpdateMailQuery, [Mail , DeviceUID ], (UpdateMailError, UpdateMailResult) => {
       if (UpdateMailError) {
-        console.log(UpdateMailError);
         return res.status(401).json({ message: 'error during updating Mail ',UpdateMailError});
       }
       res.status(200).json({ message: 'Mail Updated Successfully' });
   });
 }
-
-
-// function last5alerts(req,res){
-//   const DeviceUID = req.params.DeviceUID;
-//   const mailquery=`SELECT TimeStamp, Temperature
-//   FROM actual_data
-//   WHERE DeviceUID = ? 
-//     AND Temperature >= (
-//       SELECT TriggerValue 
-//       FROM tms_trigger 
-//       WHERE DeviceUID = ?
-//     )
-//   ORDER BY TimeStamp DESC
-//   LIMIT 5;`;
-//   db.query(mailquery,[DeviceUID,DeviceUID],(err,results)=>{
-//     if(err){
-//       console.error('Error fething data',err);
-//       res.status(404).send('error occured');
-//       return;
-//     }
-//     res.status(200).json(results);
-
-//   })
-// }
 
 function last5alerts(req, res) {
   const DeviceUID = req.params.DeviceUID;
