@@ -1232,58 +1232,167 @@ function getTotalVolumeForMonthEmail(req, res) {
 }
 
 
+// function getTotalVolumeForDuration(req, res) {
+//   const { deviceId } = req.params;
+//   const { interval } = req.query;
+
+//   try {
+
+//     let duration;
+//     switch (interval) {
+//       case '30sec':
+//         duration = 'INTERVAL 1 DAY';
+//         break;
+//       case '1min':
+//         duration = 'INTERVAL 1 DAY';
+//         break;
+//       case '2min':
+//         duration = 'INTERVAL 1 DAY';
+//         break;
+//       case '5min':
+//         duration = 'INTERVAL 1 DAY';
+//         break;
+//       case '10min':
+//         duration = 'INTERVAL 1 DAY';
+//         break;
+//       case '30min':
+//         duration = 'INTERVAL 1 DAY';
+//         break;
+//       case '1hour':
+//         duration = 'INTERVAL 1 DAY';
+//         break;
+//       case '2hour':
+//         duration = 'INTERVAL 1 DAY';
+//         break;
+//       case '10hour':
+//         duration = 'INTERVAL 1 DAY';
+//         break;
+//       case '12hour':
+//         duration = 'INTERVAL 1 DAY';
+//         break;
+//       case '1day':
+//         duration = 'INTERVAL 1 DAY';
+//         break;
+//       case '7day':
+//         duration = 'INTERVAL 7 DAY';
+//         break;
+//       case '30day':
+//         duration = 'INTERVAL 30 DAY';
+//         break;
+//       default:
+//         return res.status(400).json({ message: 'Invalid time interval' });
+//     }
+
+//     const sql = `SELECT * FROM tms_Day_Consumption WHERE DeviceUID = ? AND TimeStamp >= DATE_SUB(NOW(), ${duration})`;
+//     db.query(sql, [deviceId], (error, results) => {
+//       if (error) {
+//         console.error('Error fetching data:', error);
+//         return res.status(500).json({ message: 'Internal server error' });
+//       }
+//       res.json({ data: results });
+//     });
+//   } catch (error) {
+//     console.error('Error in device retrieval:', error);
+//     res.status(500).json({ message: 'Internal server error' });
+//   }
+// }
+
 function getTotalVolumeForDuration(req, res) {
   const { deviceId } = req.params;
   const { interval } = req.query;
 
   try {
-
-    let duration;
+    let sql;
     switch (interval) {
-      case '30sec':
-        duration = 'INTERVAL 1 DAY';
-        break;
-      case '1min':
-        duration = 'INTERVAL 1 DAY';
-        break;
-      case '2min':
-        duration = 'INTERVAL 1 DAY';
-        break;
-      case '5min':
-        duration = 'INTERVAL 1 DAY';
-        break;
-      case '10min':
-        duration = 'INTERVAL 1 DAY';
-        break;
-      case '30min':
-        duration = 'INTERVAL 1 DAY';
-        break;
       case '1hour':
-        duration = 'INTERVAL 1 DAY';
-        break;
-      case '2hour':
-        duration = 'INTERVAL 1 DAY';
-        break;
-      case '10hour':
-        duration = 'INTERVAL 1 DAY';
+        sql = `
+        SELECT
+          DeviceUID,
+          FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(TimeStamp) / 60) * 60) AS TimeStamp,
+          MAX(totalVolume) - MIN(totalVolume) AS totalVolume
+        FROM
+          actual_data
+        WHERE
+          DeviceUID = ? AND TimeStamp >= DATE_SUB(NOW(), INTERVAL 1 HOUR)
+        GROUP BY
+          DeviceUID,
+          TimeStamp
+        ORDER BY
+          DeviceUID,
+          TimeStamp;`;
         break;
       case '12hour':
-        duration = 'INTERVAL 1 DAY';
+        sql = `
+        SELECT
+          DeviceUID,
+          FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(TimeStamp) / 3600) * 3600) AS TimeStamp,
+          MAX(totalVolume) - MIN(totalVolume) AS totalVolume
+        FROM
+          actual_data
+        WHERE
+          DeviceUID = ? AND TimeStamp >= DATE_SUB(NOW(), INTERVAL 12 HOUR)
+        GROUP BY
+          DeviceUID,
+          FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(TimeStamp) / 3600) * 3600)
+        ORDER BY
+          DeviceUID,
+          TimeStamp;`
         break;
       case '1day':
-        duration = 'INTERVAL 1 DAY';
+        sql = `
+        SELECT
+          DeviceUID,
+          FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(TimeStamp) / 3600) * 3600) AS TimeStamp,
+          MAX(totalVolume) - MIN(totalVolume) AS totalVolume
+        FROM
+          actual_data
+        WHERE
+          DeviceUID = ? AND TimeStamp >= DATE_SUB(NOW(), INTERVAL 1 DAY)
+        GROUP BY
+          DeviceUID,
+          FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(TimeStamp) / 3600) * 3600)
+        ORDER BY
+          DeviceUID,
+          TimeStamp;`
         break;
       case '7day':
-        duration = 'INTERVAL 7 DAY';
+        sql = `
+        SELECT
+          DeviceUID,
+          DATE(FROM_UNIXTIME(UNIX_TIMESTAMP(TimeStamp))) AS TimeStamp,
+          MAX(totalVolume) - MIN(totalVolume) AS totalVolume
+        FROM
+          actual_data
+        WHERE
+          DeviceUID = ? AND TimeStamp >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        GROUP BY
+          DeviceUID,
+          DATE(FROM_UNIXTIME(UNIX_TIMESTAMP(TimeStamp)))
+        ORDER BY
+          DeviceUID,
+          TimeStamp;`
         break;
       case '30day':
-        duration = 'INTERVAL 30 DAY';
+        sql = `
+        SELECT
+          DeviceUID,
+          DATE(FROM_UNIXTIME(UNIX_TIMESTAMP(TimeStamp))) AS TimeStamp,
+          MAX(totalVolume) - MIN(totalVolume) AS totalVolume
+        FROM
+          actual_data
+        WHERE
+          DeviceUID = ? AND TimeStamp >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+        GROUP BY
+          DeviceUID,
+          DATE(FROM_UNIXTIME(UNIX_TIMESTAMP(TimeStamp)))
+        ORDER BY
+          DeviceUID,
+          TimeStamp;`
         break;
       default:
         return res.status(400).json({ message: 'Invalid time interval' });
     }
-
-    const sql = `SELECT * FROM tms_Day_Consumption WHERE DeviceUID = ? AND TimeStamp >= DATE_SUB(NOW(), ${duration})`;
+    
     db.query(sql, [deviceId], (error, results) => {
       if (error) {
         console.error('Error fetching data:', error);
@@ -1302,7 +1411,7 @@ function getWaterConsumptionForDateRange(req, res) {
 
   try {
     // Fetch entries within the specified date range
-    const fetchEntriesQuery = 'SELECT * FROM tms_Day_Consumption WHERE DeviceUID = ? AND DATE(TimeStamp) BETWEEN ? AND ? ORDER BY TimeStamp ASC';
+    const fetchEntriesQuery = 'SELECT * FROM actual_data WHERE DeviceUID = ? AND DATE(TimeStamp) BETWEEN ? AND ? ORDER BY TimeStamp ASC';
       
     db.query(fetchEntriesQuery, [deviceId, startDate, endDate], (fetchError, fetchResult) => {
       if (fetchError) {

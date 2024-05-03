@@ -298,6 +298,7 @@ function userByCompanyname(req, res) {
         res.status(500).json({ message: 'Internal server error' });
       }
     }
+
     function deviceInfo(req, res) {
       try {
         const query = 'SELECT * FROM dev_info';
@@ -312,6 +313,7 @@ function userByCompanyname(req, res) {
         res.status(500).json({ message: 'Internal server error' });
       }
     }
+    
     function companyinfo(req, res) {
       try {
         const query = 'SELECT * FROM company_info';
