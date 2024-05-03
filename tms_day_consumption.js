@@ -48,7 +48,7 @@ async function updateOrInsertData() {
           tms.actual_data AS ad
         WHERE
           ad.DeviceUID IN (
-            SELECT DeviceUID FROM tms.tms_devices WHERE DeviceType = 'ws' OR DeviceType = 'fs'
+            SELECT DeviceUID FROM tms.tms_devices WHERE DeviceType = 'ws' OR DeviceType = 'fs' OR DeviceType = 'ts'
           ) AND DATE(ad.TimeStamp) = ?
         GROUP BY
           ad.DeviceUID`;
