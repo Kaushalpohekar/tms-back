@@ -1308,7 +1308,7 @@ function getTotalVolumeForDuration(req, res) {
         sql = `
         SELECT
           DeviceUID,
-          FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(TimeStamp) / 60) * 60) AS TimeStamp,
+          FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(TimeStamp) / 3600) * 3600) AS TimeStamp,
           MAX(totalVolume) - MIN(totalVolume) AS totalVolume
         FROM
           actual_data
@@ -1316,7 +1316,7 @@ function getTotalVolumeForDuration(req, res) {
           DeviceUID = ? AND TimeStamp >= DATE_SUB(NOW(), INTERVAL 1 HOUR)
         GROUP BY
           DeviceUID,
-          TimeStamp
+          FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(TimeStamp) / 3600) * 3600)
         ORDER BY
           DeviceUID,
           TimeStamp;`;
