@@ -18,13 +18,13 @@ let totalVolume = 0;
 
 function generateRandomData(deviceId) {
   const DeviceUID = deviceId;
-  const Humidity = parseFloat(getRandomNumber(40, 70).toFixed(1));
+  const Temperature = parseFloat(getRandomNumber(10, 20).toFixed(1));
   const flowRate = parseFloat(getRandomNumber(1, 5).toFixed(2)); // Example range: 1 to 5
   totalVolume += flowRate;
 
   const data = {
     DeviceUID,
-    Humidity,
+    Temperature,
     flowRate,
     totalVolume
   };
@@ -37,7 +37,7 @@ const client = mqtt.connect(brokerOptions);
 client.on('connect', () => {
   console.log('Connected to MQTT broker');
 
-  const deviceId = `ABCSD`;
+  const deviceId = `fghj`;
     const topic = `Sense/Live/${deviceId}`;
 
     setInterval(() => {
