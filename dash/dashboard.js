@@ -335,7 +335,7 @@ function getDataByTimeInterval(req, res) {
         sql = `
         SELECT
           DeviceUID,
-          FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(TimeStamp) / (5 * 60)) * (5 * 60)) AS bucket_start_time,
+          FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(TimeStamp) / (10 * 60)) * (10 * 60)) AS bucket_start_time,
           ROUND(AVG(Temperature), 1) AS Temperature,
           ROUND(AVG(Humidity), 1) AS Humidity,
           ROUND(AVG(flowRate), 1) AS flowRate,
@@ -368,7 +368,7 @@ function getDataByTimeInterval(req, res) {
           ROUND(AVG(TemperatureY), 1) AS TemperatureY,
           ROUND(AVG(Pressure), 1) AS Pressure
         FROM
-          actual_data
+          clean_data
         WHERE
           DeviceUID = ? AND TimeStamp >= DATE_SUB(NOW(), INTERVAL 30 DAY)
         GROUP BY
@@ -392,7 +392,7 @@ function getDataByTimeInterval(req, res) {
             ROUND(AVG(TemperatureY), 1) AS TemperatureY,
             ROUND(AVG(Pressure), 1) AS Pressure
           FROM
-            actual_data
+            clean_data
           WHERE
             DeviceUID = ? AND TimeStamp >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
           GROUP BY
@@ -416,7 +416,7 @@ function getDataByTimeInterval(req, res) {
             ROUND(AVG(TemperatureY), 1) AS TemperatureY,
             ROUND(AVG(Pressure), 1) AS Pressure
           FROM
-            actual_data
+            clean_data
           WHERE
             DeviceUID = ? AND TimeStamp >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
           GROUP BY
