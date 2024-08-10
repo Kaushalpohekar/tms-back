@@ -1028,7 +1028,7 @@ function getTotalVolumeForTodayEmail(req, res) {
 
   try {
     // Fetch devices for the given company email
-    const fetchDevicesQuery = 'SELECT * FROM tms_devices WHERE CompanyEmail = ? AND DeviceType = "ws" OR DeviceType = "fs" OR DeviceType = "ts"';
+    const fetchDevicesQuery = 'SELECT * FROM tms_devices WHERE CompanyEmail = ? AND (DeviceType = "ws" OR DeviceType = "fs" OR DeviceType = "ts")';
     db.query(fetchDevicesQuery, [CompanyEmail], (fetchError, devices) => {
       if (fetchError) {
         console.error('Error while fetching devices:', fetchError);
@@ -1093,6 +1093,7 @@ function getTotalVolumeForTodayEmail(req, res) {
 }
 
 
+
 function getTotalVolumeForMonth(req, res) {
   const { deviceId } = req.params;
   try {
@@ -1139,7 +1140,7 @@ function getTotalVolumeForMonthEmail(req, res) {
 
   try {
     // Fetch devices for the given company email
-    const fetchDevicesQuery = 'SELECT * FROM tms_devices WHERE CompanyEmail = ? AND DeviceType = "ws" OR DeviceType = "fs" OR DeviceType = "ts"';
+    const fetchDevicesQuery = 'SELECT * FROM tms_devices WHERE CompanyEmail = ? AND (DeviceType = "ws" OR DeviceType = "fs" OR DeviceType = "ts")';
     
     db.query(fetchDevicesQuery, [CompanyEmail], (fetchError, devices) => {
       if (fetchError) {
