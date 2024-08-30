@@ -13,19 +13,27 @@ function getRandomNumber(min, max) {
   return Math.random() * (max - min) + min;
 } 
 
-let totalVolume = 0;
+let currentFlowRate = 540;
+let isIncreasing = Math.random() > 0.5; // Randomly decide if it's increasing or decreasing
 
-function generateRandomData(deviceId) {
+function generateControlledFlowRateData(deviceId) {
   const DeviceUID = deviceId;
-  const Temperature = parseFloat(getRandomNumber(10, 20).toFixed(1));
-  const flowRate = parseFloat(getRandomNumber(1, 5).toFixed(2)); // Example range: 1 to 5
-  totalVolume += flowRate;
+
+  if (isIncreasing) {
+    currentFlowRate += getRandomNumber(0.1, 1.0);
+    if (currentFlowRate > 630) {
+      isIncreasing = false;
+    }
+  } else {
+    currentFlowRate -= getRandomNumber(0.1, 1.0);
+    if (currentFlowRate < 540) {
+      isIncreasing = true;
+    }
+  }
 
   const data = {
     DeviceUID,
-    Temperature,
-    flowRate,
-    totalVolume
+    flowRate: parseFloat(currentFlowRate.toFixed(2))
   };
 
   return JSON.stringify(data);
@@ -36,14 +44,15 @@ const client = mqtt.connect(brokerOptions);
 client.on('connect', () => {
   console.log('Connected to MQTT broker');
 
-  const deviceId = `2409`;  // Updated deviceId to 2409
+  const deviceId = `SL02202423`;  // Device ID
   const topic = `Sense/Live/${deviceId}`;
 
+  // Publisher: Controlled flow rate data only
   setInterval(() => {
-    const message = generateRandomData(deviceId);
+    const message = generateControlledFlowRateData(deviceId);
     client.publish(topic, message);
-    console.log("publish for ", topic, message);
-  }, 1000);  // Set the interval to 1 second (1000 ms)
+    console.log("Published to", topic, message);
+  }, 5 * 1000);  // Set the interval to 1 second (1000 ms)
 });
 
 client.on('error', (error) => {
