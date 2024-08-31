@@ -96,4 +96,6 @@ router.get('/fetchAllCounts', newSa.fetchAllCounts);
 
 router.get('/getCountsDataForCharts/intervals', newSa.getDataByTimeInterval);
 router.get('/fetchAllCompanies', newSa.fetchAllCompanies);
+router.get('/fetchDeviceData/:deviceUID', newSa.fetchDeviceData);
+router.get('/fetchLatestDeviceData/:deviceUID', newSa.fetchLatestDeviceData);
 module.exports = router;

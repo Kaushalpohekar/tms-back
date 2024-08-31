@@ -358,6 +358,112 @@ async function fetchAllCompanies(req, res) {
     }
 }
 
+async function fetchDeviceData(req, res) {
+    const { deviceUID } = req.params; // Assuming you send deviceUID as a URL parameter
+
+    try {
+        // Query to fetch the primary device data
+        const queryPrimary = `
+            SELECT
+                d.DeviceUID,
+                d.DeviceLocation,
+                d.DeviceName,
+                d.CompanyEmail,
+                d.CompanyName,
+                d.IssueDate as DeviceIssueDate,
+                d.status,
+                d.DeviceType,
+                t.TriggerValue,
+                t.PersonalEmail,
+                t.ContactNO,
+                s.SimProvider,
+                s.SimMobileNo,
+                s.IssueDate as SimIssueDate
+            FROM
+                tms_devices d
+            LEFT JOIN
+                tms_trigger t ON d.DeviceUID = t.DeviceUID
+            LEFT JOIN
+                tms_sim_data s ON d.DeviceUID = s.DeviceUID
+            WHERE
+                d.DeviceUID = ?
+        `;
+        
+        const [primaryRows] = await db.promise().query(queryPrimary, [deviceUID]);
+
+        if (primaryRows.length === 0) {
+            res.status(404).json({ message: 'No data found for the specified device' });
+            return;
+        }
+
+        // Query to fetch the additional data (first entry and total count)
+        const queryAdditional = `
+            SELECT
+                TimeStamp as FirstEntryDate
+            FROM
+                actual_data
+            WHERE
+                DeviceUID = ?
+            ORDER BY
+                TimeStamp ASC
+            LIMIT 1
+        `;
+        
+        const [additionalFirstEntry] = await db.promise().query(queryAdditional, [deviceUID]);
+
+        // Query to count total number of entries in tms_additional_data for the device
+        const queryCount = `
+            SELECT COUNT(*) as TotalCount
+            FROM
+                actual_data
+            WHERE
+                DeviceUID = ?
+        `;
+        
+        const [[countResult]] = await db.promise().query(queryCount, [deviceUID]);
+
+        res.json({
+            deviceData: primaryRows,
+            firstEntry: additionalFirstEntry || null,
+            totalCount: countResult.TotalCount
+        });
+    } catch (error) {
+        console.error('Error fetching device data:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+async function fetchLatestDeviceData(req, res) {
+    const { deviceUID } = req.params; // Assuming you send deviceUID as a URL parameter
+
+    try {
+        // Query to fetch the primary device data
+        const queryPrimary = `
+            SELECT
+                *
+            FROM
+                actual_data 
+            WHERE
+                DeviceUID = ?
+            ORDER BY Timestamp DESC LIMIT 1;
+        `;
+        
+        const [primaryRows] = await db.promise().query(queryPrimary, [deviceUID]);
+
+        if (primaryRows.length === 0) {
+            return res.status(404).json({ message: 'No data found for the specified device' });
+        }
+
+        res.json({
+            deviceData: primaryRows[0], // Send the first row of the result
+        });
+    } catch (error) {
+        console.error('Error fetching device data:', error.message); // Log error message
+        res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+
 
 module.exports = {
     fetchAllDevices,
@@ -369,5 +475,7 @@ module.exports = {
     countUserStatuses,
     fetchAllCounts,
     getDataByTimeInterval,
-    fetchAllCompanies
+    fetchAllCompanies,
+    fetchDeviceData,
+    fetchLatestDeviceData
 }
