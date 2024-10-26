@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt');
 const db = require('../db');
+const moment = require('moment');
 
 function userDevices(req, res) {
   const companyEmail = req.params.companyEmail;
@@ -1348,6 +1349,210 @@ function getTotalVolumeForDuration(req, res) {
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
+// function getTotalVolumeForDuration(req, res) {
+//   const { deviceId } = req.params;
+//   const { interval } = req.query;
+
+//   try {
+//     let sql;
+//     switch (interval) {
+//       case '1hour':
+//         sql = `
+//         SELECT
+//           DeviceUID,
+//           FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(TimeStamp) / 3600) * 3600) AS TimeStamp,
+//           MAX(totalVolume) - MIN(totalVolume) AS totalVolume
+//         FROM
+//           actual_data
+//         WHERE
+//           DeviceUID = ? AND TimeStamp >= DATE_SUB(NOW(), INTERVAL 1 HOUR)
+//         GROUP BY
+//           DeviceUID,
+//           FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(TimeStamp) / 3600) * 3600)
+//         ORDER BY
+//           DeviceUID,
+//           TimeStamp;`;
+//         break;
+//       case '12hour':
+//         sql = `
+//         SELECT
+//           DeviceUID,
+//           FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(TimeStamp) / 3600) * 3600) AS TimeStamp,
+//           MAX(totalVolume) - MIN(totalVolume) AS totalVolume
+//         FROM
+//           actual_data
+//         WHERE
+//           DeviceUID = ? AND TimeStamp >= DATE_SUB(NOW(), INTERVAL 12 HOUR)
+//         GROUP BY
+//           DeviceUID,
+//           FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(TimeStamp) / 3600) * 3600)
+//         ORDER BY
+//           DeviceUID,
+//           TimeStamp;`
+//         break;
+//       case '1day':
+//         sql = `
+//         SELECT
+//           DeviceUID,
+//           FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(TimeStamp) / 3600) * 3600) AS TimeStamp,
+//           MAX(totalVolume) - MIN(totalVolume) AS totalVolume
+//         FROM
+//           actual_data
+//         WHERE
+//           DeviceUID = ? AND TimeStamp >= DATE_SUB(NOW(), INTERVAL 1 DAY)
+//         GROUP BY
+//           DeviceUID,
+//           FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(TimeStamp) / 3600) * 3600)
+//         ORDER BY
+//           DeviceUID,
+//           TimeStamp;`
+//         break;
+//       case '7day':
+//         sql = `
+//         SELECT
+//           DeviceUID,
+//           DATE(FROM_UNIXTIME(UNIX_TIMESTAMP(TimeStamp))) AS TimeStamp,
+//           MAX(totalVolume) - MIN(totalVolume) AS totalVolume
+//         FROM
+//           actual_data
+//         WHERE
+//           DeviceUID = ? AND TimeStamp >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+//         GROUP BY
+//           DeviceUID,
+//           DATE(FROM_UNIXTIME(UNIX_TIMESTAMP(TimeStamp)))
+//         ORDER BY
+//           DeviceUID,
+//           TimeStamp;`
+//         break;
+//       case '30day':
+//         sql = `
+//         SELECT
+//           DeviceUID,
+//           DATE(FROM_UNIXTIME(UNIX_TIMESTAMP(TimeStamp))) AS TimeStamp,
+//           MAX(totalVolume) - MIN(totalVolume) AS totalVolume
+//         FROM
+//           actual_data
+//         WHERE
+//           DeviceUID = ? AND TimeStamp >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+//         GROUP BY
+//           DeviceUID,
+//           DATE(FROM_UNIXTIME(UNIX_TIMESTAMP(TimeStamp)))
+//         ORDER BY
+//           DeviceUID,
+//           TimeStamp;`
+//         break;
+//       case '6month':
+//         sql = `
+//         SELECT
+//           DeviceUID,
+//           DATE_FORMAT(TimeStamp, '%Y-%m') AS TimeStamp,
+//           MAX(totalVolume) - MIN(totalVolume) AS totalVolume
+//         FROM
+//           actual_data
+//         WHERE
+//           DeviceUID = ? AND TimeStamp >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+//         GROUP BY
+//           DeviceUID,
+//           DATE_FORMAT(TimeStamp, '%Y-%m')
+//         ORDER BY
+//           DeviceUID,
+//           TimeStamp;`
+//         break;
+//       case '12month':
+//         sql = `
+//         SELECT
+//           DeviceUID,
+//           DATE_FORMAT(TimeStamp, '%Y-%m') AS TimeStamp,
+//           MAX(totalVolume) - MIN(totalVolume) AS totalVolume
+//         FROM
+//           actual_data
+//         WHERE
+//           DeviceUID = ? AND TimeStamp >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+//         GROUP BY
+//           DeviceUID,
+//           DATE_FORMAT(TimeStamp, '%Y-%m')
+//         ORDER BY
+//           DeviceUID,
+//           TimeStamp;`
+//         break;
+//       default:
+//         return res.status(400).json({ message: 'Invalid time interval' });
+//     }
+
+//     db.query(sql, [deviceId], (error, results) => {
+//       if (error) {
+//         console.error('Error fetching data:', error);
+//         return res.status(500).json({ message: 'Internal server error' });
+//       }
+
+//       // Assuming `results` looks like this:
+//       // [{"DeviceUID":"SL02202339","TimeStamp":"2024-10-04T18:30:00.000Z","totalVolume":12690},
+//       //  {"DeviceUID":"SL02202339","TimeStamp":"2024-10-05T18:30:00.000Z","totalVolume":7032},
+//       //  {"DeviceUID":"SL02202339","TimeStamp":"2024-10-08T18:30:00.000Z","totalVolume":1518}]
+      
+//       const filledData = fillMissingDates(results, interval);
+//       res.json({ data: filledData });
+//     });
+//   } catch (error) {
+//     console.error('Error in device retrieval:', error);
+//     res.status(500).json({ message: 'Internal server error' });
+//   }
+// }
+
+// function fillMissingDates(data, interval) {
+//   const filledData = [];
+//   let dateFormat;
+
+//   // Define the date format based on interval
+//   switch (interval) {
+//     case '1day':
+//     case '7day':
+//     case '30day':
+//       dateFormat = 'YYYY-MM-DD';
+//       break;
+//     case '12month':
+//     case '6month':
+//       dateFormat = 'YYYY-MM';
+//       break;
+//     default:
+//       dateFormat = 'YYYY-MM-DD';
+//   }
+
+//   // Convert string timestamps to moment objects
+//   const startDate = moment(data[0].TimeStamp).startOf('day');
+//   const endDate = moment(data[data.length - 1].TimeStamp).startOf('day');
+
+//   let currentDate = startDate.clone();
+
+//   let i = 0;
+//   while (currentDate.isSameOrBefore(endDate)) {
+//     if (i < data.length && moment(data[i].TimeStamp).isSame(currentDate, 'day')) {
+//       // If the current date matches the data entry, push it as-is
+//       filledData.push(data[i]);
+//       i++;
+//     } else {
+//       // If there is a missing date, create an entry with an interpolated value
+//       const prevVolume = i > 0 ? data[i - 1].totalVolume : 0;
+//       const nextVolume = i < data.length ? data[i].totalVolume : prevVolume;
+
+//       // Linear interpolation between previous and next known values
+//       const daysBetween = moment(data[i].TimeStamp).diff(currentDate, 'days') || 1;
+//       const interpolatedVolume = Math.round(prevVolume + ((nextVolume - prevVolume) / daysBetween));
+
+//       filledData.push({
+//         DeviceUID: data[0].DeviceUID,
+//         TimeStamp: currentDate.format('YYYY-MM-DD'), // Adjust format
+//         totalVolume: interpolatedVolume,
+//       });
+//     }
+
+//     // Move to the next day
+//     currentDate.add(1, 'day');
+//   }
+
+//   return filledData;
+// }
 
 function getWaterConsumptionForDateRange(req, res) {
   const { deviceId, startDate, endDate } = req.params;
