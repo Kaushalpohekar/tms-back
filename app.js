@@ -47,6 +47,7 @@ app.use(bodyParser.json());
 
 app.use((req, res, next) => {
   const origin = req.headers.origin;
+  console.log(`Request Origin: ${origin}`);
   if (!allowedOrigins.includes(origin)) {
     return res.status(403).sendFile(path.join(__dirname, 'public', 'access_denied.html'));
   }
