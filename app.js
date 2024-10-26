@@ -3,8 +3,9 @@ const cors = require('cors');
 const router = require('./routes');
 const fs = require('fs');
 const bodyParser = require('body-parser');
+//const SA = require('./superadmin/SA');
+//const TMS_logs = require('./tms_trigger_logs');
 const https = require('https');
-const path = require('path');
 
 const privateKey = fs.readFileSync('/etc/letsencrypt/live/senso.senselive.in/privkey.pem', 'utf8');
 const fullchain = fs.readFileSync('/etc/letsencrypt/live/senso.senselive.in/fullchain.pem', 'utf8');
@@ -14,51 +15,25 @@ const app = express();
 
 const port = 3000;
 
-// app.use(cors());
-// app.use(express.json());
-// app.use(bodyParser.json());
 
-// app.use('/api', router);
-// app.get('/api/test', (req, res) => {
-//   console.log('Received GET request to /api/example');
-//   res.send('Response from Node.js server');
-// });
-
-// app.use((req, res, next) => {
-//   const origin = req.headers.origin;
-//   if (!allowedOrigins.includes(origin)) {
-//     return res.status(403).sendFile(path.join(__dirname, 'public', 'access_denied.html'));
-//   }
-//   next();
-// });
-
-const allowedOrigins = ['https://senso.senselive.in', 'http://localhost:4200'];
-
-const corsOptions = {
-  origin: allowedOrigins,
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  credentials: true,
-  optionsSuccessStatus: 200,
-};
-
-app.use(cors(corsOptions));
+app.use(cors());
 app.use(express.json());
 app.use(bodyParser.json());
+//app.use(SA.log);
 
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  console.log(`Request Origin: ${origin}`);
-  if (!allowedOrigins.includes(origin)) {
-    return res.status(403).sendFile(path.join(__dirname, 'public', 'access_denied.html'));
-  }
-  next();
-});
-
+// Use the router for handling routes
+//app.use(router);
 app.use('/api', router);
 app.get('/api/test', (req, res) => {
   console.log('Received GET request to /api/example');
   res.send('Response from Node.js server');
 });
+
+// Start the server
+// app.listen(port, () => {
+//   console.log(`Server running on port ${port}`);
+// });
+
 
 const httpsServer = https.createServer(credentials, app);
 
