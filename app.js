@@ -32,7 +32,7 @@ const port = 3000;
 //   next();
 // });
 
-const allowedOrigins = ['https://senso.senselive.in', 'http://localhost:4200'];
+const allowedOrigins = ['https://senso.senselive.in/', 'http://localhost:4200'];
 
 const corsOptions = {
   origin: allowedOrigins,
