@@ -14,7 +14,7 @@ const app = express();
 
 const port = 3000;
 
-const path = require('path');
+const allowedOrigins = ['https://senso.senselive.in', 'http://localhost:4200'];
 
 app.use(cors());
 app.use(express.json());
