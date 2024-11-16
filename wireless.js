@@ -54,10 +54,10 @@ mqttClient.on('message', (topic, message) => {
     const data = JSON.parse(message);
 
     // Extract temperature values from the payload
-    const temp1 = data.data.Temp1;
-    const temp2 = data.data.Temp2;
-    const temp3 = data.data.Temp3;
-    const temp4 = data.data.Temp4;
+    const temp1 = data.data.Temp1 / 10;
+    const temp2 = data.data.Temp2 / 10;
+    const temp3 = data.data.Temp3 / 10;
+    const temp4 = data.data.Temp4 / 10;
 
     // Define corresponding DeviceUID values for each temperature
     const devices = [
