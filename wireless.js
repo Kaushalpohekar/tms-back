@@ -5,11 +5,18 @@ const os = require('os');
 const broker = 'ws://dashboard.senselive.in:9001';
 
 const mysqlConfig = {
-  host: 'senso.senselive.in',
-  user: 'mysql',
-  password: 'sense!123',
+  // host: 'senso.senselive.in',
+  // user: 'mysql',
+  // password: 'sense!123',
+  // database: 'tms',
+  // port: 3306,
+  host: 'sl02-mysql.mysql.database.azure.com',
+  user: 'senselive',
+  password: 'SenseLive@2030',
   database: 'tms',
-  port: 3306,
+  ssl: {
+    rejectUnauthorized: false,
+  }
 };
 
 const mysqlPool = mysql.createPool(mysqlConfig);
