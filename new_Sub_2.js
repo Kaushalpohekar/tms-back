@@ -13,7 +13,7 @@ const mysqlConfig = {
   host: 'sl02-mysql.mysql.database.azure.com',
   user: 'senselive',
   password: 'SenseLive@2030',
-  database: 'orp',
+  database: 'tms',
   ssl: {
     rejectUnauthorized: false,
   }
