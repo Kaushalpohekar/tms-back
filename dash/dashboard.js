@@ -14,7 +14,7 @@ function userDevices(req, res) {
 
     try {
       if (userCheckResult.length === 0) {
-                                                     
+
         return res.status(400).json({ message: 'User not found!' });
       }
 
@@ -37,7 +37,7 @@ function userDevices(req, res) {
 
 function editDevice(req, res) {
   const deviceId = req.params.deviceId;
-  const { DeviceLocation, DeviceName}  = req.body; 
+  const { DeviceLocation, DeviceName } = req.body;
   const deviceCheckQuery = 'SELECT * FROM tms_devices WHERE DeviceUID = ?';
 
   db.query(deviceCheckQuery, [deviceId], (error, deivceCheckResult) => {
@@ -70,7 +70,7 @@ function editDevice(req, res) {
 
 function companyDetails(req, res) {
   const UserId = req.params.UserId;
-  const { Designation, ContactNo, Location}  = req.body; 
+  const { Designation, ContactNo, Location } = req.body;
   const userCheckQuery = 'SELECT * FROM tms_users WHERE UserId = ?';
 
   db.query(userCheckQuery, [UserId], (error, useridCheckResult) => {
@@ -86,7 +86,7 @@ function companyDetails(req, res) {
 
       const userQuery = 'Update tms_users SET Designation=?, ContactNo=?, Location=? WHERE UserId=?';
 
-      db.query(userQuery, [Designation, ContactNo, Location, UserId],(error, details) => {
+      db.query(userQuery, [Designation, ContactNo, Location, UserId], (error, details) => {
         if (error) {
           console.error('Error fetching company details:', error);
           return res.status(500).json({ message: 'Internal server error' });
@@ -103,7 +103,7 @@ function companyDetails(req, res) {
 
 function personalDetails(req, res) {
   const UserId = req.params.UserId;
-  const {FirstName, LastName}  = req.body; 
+  const { FirstName, LastName } = req.body;
   const userCheckQuery = 'SELECT * FROM tms_users WHERE UserId = ?';
 
   db.query(userCheckQuery, [UserId], (error, useridCheckResult) => {
@@ -119,7 +119,7 @@ function personalDetails(req, res) {
 
       const userdetailQuery = 'Update tms_users SET FirstName=?, LastName=? WHERE UserId=?';
 
-      db.query(userdetailQuery, [FirstName, LastName, UserId],(error, details) => {
+      db.query(userdetailQuery, [FirstName, LastName, UserId], (error, details) => {
         if (error) {
           console.error('Error fetching devices:', error);
           return res.status(500).json({ message: 'Internal server error' });
@@ -171,41 +171,41 @@ function updatePassword(req, res) {
   });
 }
 
-function fetchDeviceTrigger(req, res){
- const deviceId = req.params.deviceId;
- const deviceTriggerQuery = 'select * from tms_trigger where DeviceUID = ?';
-   try {
-     db.query(deviceTriggerQuery, [deviceId], (error, devicetriggerkResult) => {
-       if (error) {
-         console.error('Error during device check:', error);
-         return res.status(500).json({ message: 'Internal server error' });
-       }
+function fetchDeviceTrigger(req, res) {
+  const deviceId = req.params.deviceId;
+  const deviceTriggerQuery = 'select * from tms_trigger where DeviceUID = ?';
+  try {
+    db.query(deviceTriggerQuery, [deviceId], (error, devicetriggerkResult) => {
+      if (error) {
+        console.error('Error during device check:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+      }
 
-       res.status(200).json(devicetriggerkResult);
-     });
-   } catch (error) {
-     console.error('Error in device check:', error);
-     res.status(500).json({ message: 'Internal server error' });
-   }
+      res.status(200).json(devicetriggerkResult);
+    });
+  } catch (error) {
+    console.error('Error in device check:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
 }
 
-function fetchAllDeviceTrigger(req, res){
+function fetchAllDeviceTrigger(req, res) {
   const CompanyEmail = req.params.CompanyEmail;
   const deviceTriggerQuery = 'select * from tms_trigger where CompanyEmail = ?';
 
-    try {
-      db.query(deviceTriggerQuery, [CompanyEmail], (error, triggers) => {
-        if (error) {
-          console.error('Error during device check:', error);
-          return res.status(500).json({ message: 'Internal server error' });
-        }
+  try {
+    db.query(deviceTriggerQuery, [CompanyEmail], (error, triggers) => {
+      if (error) {
+        console.error('Error during device check:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+      }
 
-        res.status(200).json({triggers});
-      });
-    } catch (error) {
-      console.error('Error in device check:', error);
-      res.status(500).json({ message: 'Internal server error' });
-    }
+      res.status(200).json({ triggers });
+    });
+  } catch (error) {
+    console.error('Error in device check:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
 }
 
 function editDeviceTrigger(req, res) {
@@ -265,13 +265,13 @@ function getDataByTimeInterval(req, res) {
         SELECT
           DeviceUID,
           FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(TimeStamp) / 60) * 60) AS bucket_start_time,
-          ROUND(AVG(Temperature), 1) AS Temperature,
-          ROUND(AVG(Humidity), 1) AS Humidity,
-          ROUND(AVG(flowRate), 1) AS flowRate,
-          ROUND(AVG(TemperatureR), 1) AS TemperatureR,
-          ROUND(AVG(TemperatureB), 1) AS TemperatureB,
-          ROUND(AVG(TemperatureY), 1) AS TemperatureY,
-          ROUND(AVG(Pressure), 1) AS Pressure
+          IFNULL(ROUND(AVG(Temperature), 1), 0) AS Temperature,
+          IFNULL(ROUND(AVG(Humidity), 1), 0) AS Humidity,
+          IFNULL(ROUND(AVG(flowRate), 1), 0) AS flowRate,
+          IFNULL(ROUND(AVG(TemperatureR), 1), 0) AS TemperatureR,
+          IFNULL(ROUND(AVG(TemperatureB), 1), 0) AS TemperatureB,
+          IFNULL(ROUND(AVG(TemperatureY), 1), 0) AS TemperatureY,
+          IFNULL(ROUND(AVG(Pressure), 1), 0) AS Pressure
         FROM
           actual_data
         WHERE
@@ -289,13 +289,13 @@ function getDataByTimeInterval(req, res) {
         SELECT
           DeviceUID,
           FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(TimeStamp) / (2 * 60)) * (2 * 60)) AS bucket_start_time,
-          ROUND(AVG(Temperature), 1) AS Temperature,
-          ROUND(AVG(Humidity), 1) AS Humidity,
-          ROUND(AVG(flowRate), 1) AS flowRate,
-          ROUND(AVG(TemperatureR), 1) AS TemperatureR,
-          ROUND(AVG(TemperatureB), 1) AS TemperatureB,
-          ROUND(AVG(TemperatureY), 1) AS TemperatureY,
-          ROUND(AVG(Pressure), 1) AS Pressure
+          IFNULL(ROUND(AVG(Temperature), 1), 0) AS Temperature,
+          IFNULL(ROUND(AVG(Humidity), 1), 0) AS Humidity,
+          IFNULL(ROUND(AVG(flowRate), 1), 0) AS flowRate,
+          IFNULL(ROUND(AVG(TemperatureR), 1), 0) AS TemperatureR,
+          IFNULL(ROUND(AVG(TemperatureB), 1), 0) AS TemperatureB,
+          IFNULL(ROUND(AVG(TemperatureY), 1), 0) AS TemperatureY,
+          IFNULL(ROUND(AVG(Pressure), 1), 0) AS Pressure
         FROM
           actual_data
         WHERE
@@ -313,13 +313,13 @@ function getDataByTimeInterval(req, res) {
         SELECT
           DeviceUID,
           FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(TimeStamp) / (2 * 60)) * (2 * 60)) AS bucket_start_time,
-          ROUND(AVG(Temperature), 1) AS Temperature,
-          ROUND(AVG(Humidity), 1) AS Humidity,
-          ROUND(AVG(flowRate), 1) AS flowRate,
-          ROUND(AVG(TemperatureR), 1) AS TemperatureR,
-          ROUND(AVG(TemperatureB), 1) AS TemperatureB,
-          ROUND(AVG(TemperatureY), 1) AS TemperatureY,
-          ROUND(AVG(Pressure), 1) AS Pressure
+          IFNULL(ROUND(AVG(Temperature), 1), 0) AS Temperature,
+          IFNULL(ROUND(AVG(Humidity), 1), 0) AS Humidity,
+          IFNULL(ROUND(AVG(flowRate), 1), 0) AS flowRate,
+          IFNULL(ROUND(AVG(TemperatureR), 1), 0) AS TemperatureR,
+          IFNULL(ROUND(AVG(TemperatureB), 1), 0) AS TemperatureB,
+          IFNULL(ROUND(AVG(TemperatureY), 1), 0) AS TemperatureY,
+          IFNULL(ROUND(AVG(Pressure), 1), 0) AS Pressure
         FROM
           actual_data
         WHERE
@@ -337,13 +337,13 @@ function getDataByTimeInterval(req, res) {
         SELECT
           DeviceUID,
           FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(TimeStamp) / (10 * 60)) * (10 * 60)) AS bucket_start_time,
-          ROUND(AVG(Temperature), 1) AS Temperature,
-          ROUND(AVG(Humidity), 1) AS Humidity,
-          ROUND(AVG(flowRate), 1) AS flowRate,
-          ROUND(AVG(TemperatureR), 1) AS TemperatureR,
-          ROUND(AVG(TemperatureB), 1) AS TemperatureB,
-          ROUND(AVG(TemperatureY), 1) AS TemperatureY,
-          ROUND(AVG(Pressure), 1) AS Pressure
+          IFNULL(ROUND(AVG(Temperature), 1), 0) AS Temperature,
+          IFNULL(ROUND(AVG(Humidity), 1), 0) AS Humidity,
+          IFNULL(ROUND(AVG(flowRate), 1), 0) AS flowRate,
+          IFNULL(ROUND(AVG(TemperatureR), 1), 0) AS TemperatureR,
+          IFNULL(ROUND(AVG(TemperatureB), 1), 0) AS TemperatureB,
+          IFNULL(ROUND(AVG(TemperatureY), 1), 0) AS TemperatureY,
+          IFNULL(ROUND(AVG(Pressure), 1), 0) AS Pressure
         FROM
           actual_data
         WHERE
@@ -361,13 +361,13 @@ function getDataByTimeInterval(req, res) {
         SELECT
           DeviceUID,
           FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(TimeStamp) / (30 * 60)) * (30 * 60)) AS bucket_start_time,
-          ROUND(AVG(Temperature), 1) AS Temperature,
-          ROUND(AVG(Humidity), 1) AS Humidity,
-          ROUND(AVG(flowRate), 1) AS flowRate,
-          ROUND(AVG(TemperatureR), 1) AS TemperatureR,
-          ROUND(AVG(TemperatureB), 1) AS TemperatureB,
-          ROUND(AVG(TemperatureY), 1) AS TemperatureY,
-          ROUND(AVG(Pressure), 1) AS Pressure
+          IFNULL(ROUND(AVG(Temperature), 1), 0) AS Temperature,
+          IFNULL(ROUND(AVG(Humidity), 1), 0) AS Humidity,
+          IFNULL(ROUND(AVG(flowRate), 1), 0) AS flowRate,
+          IFNULL(ROUND(AVG(TemperatureR), 1), 0) AS TemperatureR,
+          IFNULL(ROUND(AVG(TemperatureB), 1), 0) AS TemperatureB,
+          IFNULL(ROUND(AVG(TemperatureY), 1), 0) AS TemperatureY,
+          IFNULL(ROUND(AVG(Pressure), 1), 0) AS Pressure
         FROM
           clean_data
         WHERE
@@ -380,18 +380,18 @@ function getDataByTimeInterval(req, res) {
           bucket_start_time;`;
         break;
 
-        case '6month':
-          sql = `
+      case '6month':
+        sql = `
           SELECT
             DeviceUID,
             FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(TimeStamp) / (60 * 60)) * (60 * 60)) AS bucket_start_time,
-            ROUND(AVG(Temperature), 1) AS Temperature,
-            ROUND(AVG(Humidity), 1) AS Humidity,
-            ROUND(AVG(flowRate), 1) AS flowRate,
-            ROUND(AVG(TemperatureR), 1) AS TemperatureR,
-            ROUND(AVG(TemperatureB), 1) AS TemperatureB,
-            ROUND(AVG(TemperatureY), 1) AS TemperatureY,
-            ROUND(AVG(Pressure), 1) AS Pressure
+            IFNULL(ROUND(AVG(Temperature), 1), 0) AS Temperature,
+            IFNULL(ROUND(AVG(Humidity), 1), 0) AS Humidity,
+            IFNULL(ROUND(AVG(flowRate), 1), 0) AS flowRate,
+            IFNULL(ROUND(AVG(TemperatureR), 1), 0) AS TemperatureR,
+            IFNULL(ROUND(AVG(TemperatureB), 1), 0) AS TemperatureB,
+            IFNULL(ROUND(AVG(TemperatureY), 1), 0) AS TemperatureY,
+            IFNULL(ROUND(AVG(Pressure), 1), 0) AS Pressure
           FROM
             clean_data
           WHERE
@@ -402,20 +402,20 @@ function getDataByTimeInterval(req, res) {
           ORDER BY
             DeviceUID,
             bucket_start_time;`;
-          break;
+        break;
 
-        case '12month':
-          sql = `
+      case '12month':
+        sql = `
           SELECT
             DeviceUID,
             FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(TimeStamp) / (120 * 60)) * (120 * 60)) AS bucket_start_time,
             IFNULL(ROUND(AVG(Temperature), 1), 0) AS Temperature,
-          IFNULL(ROUND(AVG(Humidity), 1), 0) AS Humidity,
-          IFNULL(ROUND(AVG(flowRate), 1), 0) AS flowRate,
-          IFNULL(ROUND(AVG(TemperatureR), 1), 0) AS TemperatureR,
-          IFNULL(ROUND(AVG(TemperatureB), 1), 0) AS TemperatureB,
-          IFNULL(ROUND(AVG(TemperatureY), 1), 0) AS TemperatureY,
-          IFNULL(ROUND(AVG(Pressure), 1), 0) AS Pressure
+            IFNULL(ROUND(AVG(Humidity), 1), 0) AS Humidity,
+            IFNULL(ROUND(AVG(flowRate), 1), 0) AS flowRate,
+            IFNULL(ROUND(AVG(TemperatureR), 1), 0) AS TemperatureR,
+            IFNULL(ROUND(AVG(TemperatureB), 1), 0) AS TemperatureB,
+            IFNULL(ROUND(AVG(TemperatureY), 1), 0) AS TemperatureY,
+            IFNULL(ROUND(AVG(Pressure), 1), 0) AS Pressure
           FROM
             clean_data
           WHERE
@@ -426,7 +426,7 @@ function getDataByTimeInterval(req, res) {
           ORDER BY
             DeviceUID,
             bucket_start_time;`;
-          break;
+        break;
 
       default:
         return res.status(400).json({ message: 'Invalid time interval' });
@@ -524,12 +524,12 @@ function getDataByTimeIntervalStatus(req, res) {
   });
 }
 
-function avg_interval(req,res){
+function avg_interval(req, res) {
   const id = req.params.id;
   const timeInterval = req.params.interval;
   if (!timeInterval) {
     return res.status(400).json({ message: 'Invalid time interval' });
-  }  
+  }
   let duration;
   switch (timeInterval) {
 
@@ -553,8 +553,8 @@ function avg_interval(req,res){
       break;
     default:
       res.status(400).json({ message: 'Invalid time interval' });
-    }
-    const fetchbucketavgquery = `SELECT
+  }
+  const fetchbucketavgquery = `SELECT
     CONCAT(SUBSTR(DATE_FORMAT(TimeStamp, '%y-%m-%d %H.%i'), 1, 13), '0.00') AS bucket_start,
     CONCAT(SUBSTR(DATE_FORMAT(TimeStamp, '%y-%m-%d %H.%i'), 1, 13), '9.59') AS bucket_end,
     COUNT(*) AS count_bucket,
@@ -568,18 +568,18 @@ function avg_interval(req,res){
   GROUP BY
     bucket_start,bucket_end
   ORDER BY
-    bucket_start`;    
+    bucket_start`;
 
-  try{
-      db.query(fetchbucketavgquery,[id],(fetchavgError,fetchavgResult) => {
-          if(fetchavgError){
-              return res.status(401).json({message:'Unable to fetch bucket',fetchavgError});
-          }
-          return res.status(200).json({fetchavgResult});
-      })        
+  try {
+    db.query(fetchbucketavgquery, [id], (fetchavgError, fetchavgResult) => {
+      if (fetchavgError) {
+        return res.status(401).json({ message: 'Unable to fetch bucket', fetchavgError });
+      }
+      return res.status(200).json({ fetchavgResult });
+    })
   }
-  catch(error){
-      return res.status(500).send('Internal Server Error');
+  catch (error) {
+    return res.status(500).send('Internal Server Error');
   }
 }
 
@@ -621,14 +621,14 @@ function getDataByCustomDate(req, res) {
     db.query(sql, [deviceId, startDate + 'T00:00:00.000Z', endDate + 'T23:59:59.999Z'], (fetchError, results) => {
       if (fetchError) {
         // console.error('Error fetching data:', error);
-        return res.status(401).json({ message: 'Error while fetching data',fetchError });
+        return res.status(401).json({ message: 'Error while fetching data', fetchError });
       }
 
       res.json({ data: results });
     });
   } catch (error) {
     // console.error('An error occurred:', error);
-    res.status(500).json({ message: 'Internal server error',error });
+    res.status(500).json({ message: 'Internal server error', error });
   }
 }
 
@@ -767,7 +767,7 @@ function insertNewMessage(req, res) {
         isRead
       };
 
-      res.status(201).json({message : 'Message Send SuccessFully'});
+      res.status(201).json({ message: 'Message Send SuccessFully' });
     });
   } catch (error) {
     console.error('An error occurred:', error);
@@ -880,22 +880,22 @@ function fetchCompanyUser(req, res) {
 
 function addDeviceTrigger(req, res) {
   const { DeviceUID, TriggerValue, CompanyEmail } = req.body;
-    try {
-        const insertTriggerQuery = 'INSERT INTO tms_trigger (DeviceUID, TriggerValue, CompanyEmail) VALUES (?,?,?)';
+  try {
+    const insertTriggerQuery = 'INSERT INTO tms_trigger (DeviceUID, TriggerValue, CompanyEmail) VALUES (?,?,?)';
 
-        db.query(insertTriggerQuery, [DeviceUID, TriggerValue, CompanyEmail], (error, insertResult) => {
-          if (error) {
-            console.error('Error while inserting device:', error);
-            return res.status(500).json({ message: 'Internal server error' });
-          }
+    db.query(insertTriggerQuery, [DeviceUID, TriggerValue, CompanyEmail], (error, insertResult) => {
+      if (error) {
+        console.error('Error while inserting device:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+      }
 
-          return res.json({ message: 'Device Trigger added successfully!' });
-        });
+      return res.json({ message: 'Device Trigger added successfully!' });
+    });
 
-    } catch (error) {
-      console.error('Error in device check:', error);
-      res.status(500).json({ message: 'Internal server error' });
-    }
+  } catch (error) {
+    console.error('Error in device check:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
 }
 
 function addDevice(req, res) {
@@ -953,21 +953,21 @@ function barChartCustom(req, res) {
   `;
 
   db.query(queryRange, [deviceId, startDate, endDate], (err, resultRange) => {
-      connection.release();
+    connection.release();
 
-      if (err) {
-        console.error('Error executing query:', err);
-        return res.status(500).json({ message: 'Internal Server Error' });
-      }
+    if (err) {
+      console.error('Error executing query:', err);
+      return res.status(500).json({ message: 'Internal Server Error' });
+    }
 
-      // Calculate total consumption for each date
-      const datewiseConsumption = resultRange.map((row) => ({
-        date: row.date,
-        totalConsumption: row.endVolume - row.startVolume,
-      }));
+    // Calculate total consumption for each date
+    const datewiseConsumption = resultRange.map((row) => ({
+      date: row.date,
+      totalConsumption: row.endVolume - row.startVolume,
+    }));
 
-      return res.json(datewiseConsumption);
-    });
+    return res.json(datewiseConsumption);
+  });
 }
 
 function getTotalVolumeForToday(req, res) {
@@ -1142,7 +1142,7 @@ function getTotalVolumeForMonthEmail(req, res) {
   try {
     // Fetch devices for the given company email
     const fetchDevicesQuery = 'SELECT * FROM tms_devices WHERE CompanyEmail = ? AND (DeviceType = "ws" OR DeviceType = "fs" OR DeviceType = "ts")';
-    
+
     db.query(fetchDevicesQuery, [CompanyEmail], (fetchError, devices) => {
       if (fetchError) {
         console.error('Error while fetching devices:', fetchError);
@@ -1336,7 +1336,7 @@ function getTotalVolumeForDuration(req, res) {
       default:
         return res.status(400).json({ message: 'Invalid time interval' });
     }
-    
+
     db.query(sql, [deviceId], (error, results) => {
       if (error) {
         console.error('Error fetching data:', error);
@@ -1490,7 +1490,7 @@ function getTotalVolumeForDuration(req, res) {
 //       // [{"DeviceUID":"SL02202339","TimeStamp":"2024-10-04T18:30:00.000Z","totalVolume":12690},
 //       //  {"DeviceUID":"SL02202339","TimeStamp":"2024-10-05T18:30:00.000Z","totalVolume":7032},
 //       //  {"DeviceUID":"SL02202339","TimeStamp":"2024-10-08T18:30:00.000Z","totalVolume":1518}]
-      
+
 //       const filledData = fillMissingDates(results, interval);
 //       res.json({ data: filledData });
 //     });
@@ -1560,14 +1560,14 @@ function getWaterConsumptionForDateRange(req, res) {
   try {
     // Fetch entries within the specified date range
     const fetchEntriesQuery = 'SELECT DeviceUID, DATE(FROM_UNIXTIME(UNIX_TIMESTAMP(TimeStamp))) AS TimeStamp, MAX(totalVolume) - MIN(totalVolume) AS totalVolume FROM actual_data WHERE DeviceUID = ? AND TimeStamp >= ? AND TimeStamp <= ? GROUP BY DeviceUID, DATE(FROM_UNIXTIME(UNIX_TIMESTAMP(TimeStamp))) ORDER BY DeviceUID, TimeStamp;';
-      
+
     db.query(fetchEntriesQuery, [deviceId, startDate + ' 00:00:00', endDate + ' 23:59:59'], (fetchError, fetchResult) => {
       if (fetchError) {
         console.error('Error while fetching entries:', fetchError);
         return res.status(500).json({ message: 'Internal server error' });
       }
 
-      return res.json({ data:fetchResult });
+      return res.json({ data: fetchResult });
     });
   } catch (error) {
     console.error('Error in device retrieval:', error);
@@ -1578,7 +1578,7 @@ function getWaterConsumptionForDateRange(req, res) {
 function deleteDevice(req, res) {
   try {
     const deviceUID = req.params.deviceUID;
-    
+
     // Delete device from tms_devices table
     const deleteDeviceQuery = 'DELETE FROM tms_devices WHERE DeviceUID = ?';
     db.query(deleteDeviceQuery, [deviceUID], (error, result) => {
@@ -1611,7 +1611,7 @@ function deleteDevice(req, res) {
 
 function editUser(req, res) {
   const userId = req.params.userId;
-  const { FirstName, LastName, PersonalEmail, ContactNo, Location, Designation, UserType}  = req.body; 
+  const { FirstName, LastName, PersonalEmail, ContactNo, Location, Designation, UserType } = req.body;
   const UserCheckQuery = 'SELECT * FROM tms_users WHERE UserId = ?';
 
   db.query(UserCheckQuery, [userId], (error, UserCheckResult) => {
@@ -1745,22 +1745,22 @@ function fetchLatestEntry(req, res) {
 
 
 
-function fetchDeviceTotal(req, res){
- const deviceId = req.params.deviceId;
- const deviceQuery = 'select * from tms_Day_Consumption where DeviceUID = ? AND (TimeStamp) = CURDATE()';
-   try {
-     db.query(deviceQuery, [deviceId], (error, deviceResult) => {
-       if (error) {
-         console.error('Error during device check:', error);
-         return res.status(500).json({ message: 'Internal server error' });
-       }
+function fetchDeviceTotal(req, res) {
+  const deviceId = req.params.deviceId;
+  const deviceQuery = 'select * from tms_Day_Consumption where DeviceUID = ? AND (TimeStamp) = CURDATE()';
+  try {
+    db.query(deviceQuery, [deviceId], (error, deviceResult) => {
+      if (error) {
+        console.error('Error during device check:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+      }
 
-       res.status(200).json(deviceResult);
-     });
-   } catch (error) {
-     console.error('Error in device check:', error);
-     res.status(500).json({ message: 'Internal server error' });
-   }
+      res.status(200).json(deviceResult);
+    });
+  } catch (error) {
+    console.error('Error in device check:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
 }
 
 function editDeviceFromSetting(req, res) {
@@ -1804,23 +1804,23 @@ function editDeviceFromSetting(req, res) {
   });
 }
 
-function getTriggerData(req,res){
+function getTriggerData(req, res) {
   const CompanyEmail = req.params.CompanyEmail;
 
   const getquery = 'SELECT * FROM tms_trigger WHERE CompanyEmail=?';
 
-  try{
-    db.query(getquery,[CompanyEmail],(error,getresult)=>{
-      if(error){
-        console.error('Error getting user data:',error);
-        return res.status(500).json({message:'Internet server error'});
+  try {
+    db.query(getquery, [CompanyEmail], (error, getresult) => {
+      if (error) {
+        console.error('Error getting user data:', error);
+        return res.status(500).json({ message: 'Internet server error' });
       }
       res.status(200).json(getresult);
     })
   }
-  catch(error){
-    console.error('Error occured check:',error)
-    res.status(500).json({message:'Error in fetching data'})
+  catch (error) {
+    console.error('Error occured check:', error)
+    res.status(500).json({ message: 'Error in fetching data' })
   }
 }
 
@@ -1852,7 +1852,7 @@ function updateTrigger(req, res) {
 
 
 
-function deletetriggeruser(req,res){
+function deletetriggeruser(req, res) {
 
   const DeviceUID = req.params.DeviceUID;
   const deletequery = 'DELETE FROM tms_trigger WHERE DeviceUID=?';
@@ -1863,7 +1863,7 @@ function deletetriggeruser(req,res){
       return;
     }
     res.json({ message: 'Device Trigger deleted successfully' });
-  }) 
+  })
 
 }
 
@@ -1872,27 +1872,27 @@ function UpdateWhatsapp(req, res) {
   const DeviceUID = req.params.DeviceUID;
   const { Whatsapp } = req.body;
 
-    const UpdateWhatsappQuery =  'UPDATE tms_trigger SET Whatsapp = ? WHERE DeviceUID = ?';
+  const UpdateWhatsappQuery = 'UPDATE tms_trigger SET Whatsapp = ? WHERE DeviceUID = ?';
 
-      db.query(UpdateWhatsappQuery, [Whatsapp , DeviceUID ], (UpdateWhatsappError, UpdateWhatsappResult) => {
-      if (UpdateWhatsappError) {
-        return res.status(401).json({ message: 'error during updating Whatsapp ',UpdateWhatsappError});
-      }
-      res.status(200).json({ message: 'Whatsapp Updated Successfully' });
-    });
+  db.query(UpdateWhatsappQuery, [Whatsapp, DeviceUID], (UpdateWhatsappError, UpdateWhatsappResult) => {
+    if (UpdateWhatsappError) {
+      return res.status(401).json({ message: 'error during updating Whatsapp ', UpdateWhatsappError });
+    }
+    res.status(200).json({ message: 'Whatsapp Updated Successfully' });
+  });
 }
 
 
 function UpdateMail(req, res) {
   const DeviceUID = req.params.DeviceUID;
-  const { Mail }= req.body;
-    const UpdateMailQuery = 'UPDATE tms_trigger SET Mail = ? WHERE DeviceUID = ?';
+  const { Mail } = req.body;
+  const UpdateMailQuery = 'UPDATE tms_trigger SET Mail = ? WHERE DeviceUID = ?';
 
-      db.query(UpdateMailQuery, [Mail , DeviceUID ], (UpdateMailError, UpdateMailResult) => {
-      if (UpdateMailError) {
-        return res.status(401).json({ message: 'error during updating Mail ',UpdateMailError});
-      }
-      res.status(200).json({ message: 'Mail Updated Successfully' });
+  db.query(UpdateMailQuery, [Mail, DeviceUID], (UpdateMailError, UpdateMailResult) => {
+    if (UpdateMailError) {
+      return res.status(401).json({ message: 'error during updating Mail ', UpdateMailError });
+    }
+    res.status(200).json({ message: 'Mail Updated Successfully' });
   });
 }
 
