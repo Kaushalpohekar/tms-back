@@ -369,7 +369,7 @@ function getDataByTimeInterval(req, res) {
           ROUND(AVG(TemperatureY), 1) AS TemperatureY,
           ROUND(AVG(Pressure), 1) AS Pressure
         FROM
-          clean_data
+          actual_data
         WHERE
           DeviceUID = ? AND TimeStamp >= DATE_SUB(NOW(), INTERVAL 30 DAY)
         GROUP BY
@@ -393,7 +393,7 @@ function getDataByTimeInterval(req, res) {
             ROUND(AVG(TemperatureY), 1) AS TemperatureY,
             ROUND(AVG(Pressure), 1) AS Pressure
           FROM
-            clean_data
+            actual_data
           WHERE
             DeviceUID = ? AND TimeStamp >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
           GROUP BY
@@ -417,7 +417,7 @@ function getDataByTimeInterval(req, res) {
             ROUND(AVG(TemperatureY), 1) AS TemperatureY,
             ROUND(AVG(Pressure), 1) AS Pressure
           FROM
-            clean_data
+            actual_data
           WHERE
             DeviceUID = ? AND TimeStamp >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
           GROUP BY
