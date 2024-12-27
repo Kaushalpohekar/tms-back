@@ -1,13 +1,15 @@
 const mysql = require('mysql2');
-require('dotenv').config(); // Load environment variables from .env file
+require('dotenv').config();
 
 const connection = mysql.createPool({
-  connectionLimit: 20, // Set the maximum number of connections in the pool
+  connectionLimit: 20,
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  //port: process.env.DB_PORT,
+  ssl: {
+    rejectUnauthorized: false,
+  },
   connectTimeout: 10000,
 });
 
@@ -17,6 +19,7 @@ connection.getConnection((err, connection) => {
     return;
   }
   console.log('Connected to database with ID:', connection.threadId);
+  connection.release();
 });
 
 module.exports = connection;
