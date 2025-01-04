@@ -138,7 +138,7 @@ mqttClient.on('message', (topic, message) => {
 async function InsertIntoDataBase(data) {
   console.log('Data to insert:', data);
   const insertQuery = `
-    INSERT INTO actual_data (DeviceUID, Temperature, Timestamp, TemperatureR, TemperatureY, TemperatureB, Humidity, flowRate, Pressure, totalVolume, ip_address)
+    INSERT INTO tms.actual_data (DeviceUID, Temperature, Timestamp, TemperatureR, TemperatureY, TemperatureB, Humidity, flowRate, Pressure, totalVolume, ip_address)
     VALUES ($1, $2, NOW(), $3, $4, $5, $6, $7, $8, $9, $10)
   `;
 
