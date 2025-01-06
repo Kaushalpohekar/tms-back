@@ -66,7 +66,7 @@ mqttClient.on('message', (topic, message) => {
     `;
 
     const insertValues = [
-      data.DeviceUID,
+      data.DeviceUID || 'SL_Haldiram',
       data.Temperature || data.Temp_4,
       data.TemperatureR || data.Temp_1,
       data.TemperatureY || data.Temp_2,
