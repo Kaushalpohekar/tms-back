@@ -1024,71 +1024,127 @@ function getTotalVolumeForToday(req, res) {
 }
 
 
-function getTotalVolumeForTodayEmail(req, res) {
+// function getTotalVolumeForTodayEmail(req, res) {
+//   const { CompanyEmail } = req.params;
+
+//   try {
+//     // Fetch devices for the given company email
+//     const fetchDevicesQuery = 'SELECT * FROM tms_devices WHERE CompanyEmail = ? AND (DeviceType = "ws" OR DeviceType = "fs" OR DeviceType = "ts")';
+//     db.query(fetchDevicesQuery, [CompanyEmail], (fetchError, devices) => {
+//       if (fetchError) {
+//         console.error('Error while fetching devices:', fetchError);
+//         return res.status(500).json({ message: 'Internal server error' });
+//       }
+
+//       // Array to store promises for fetching consumption data
+//       const promises = [];
+
+//       // Iterate through each device
+//       devices.forEach(device => {
+//         const deviceId = device.DeviceUID;
+
+//         // Function to fetch the latest entry for a specific day
+//         const fetchDayEntry = (dayOffset) => {
+//           const fetchDayEntryQuery = `
+//             SELECT * FROM tms_Day_Consumption 
+//             WHERE DeviceUID = ? AND DATE(TimeStamp) = CURDATE() - INTERVAL ${dayOffset} DAY
+//             ORDER BY TimeStamp DESC LIMIT 1
+//           `;
+
+//           return new Promise((resolve, reject) => {
+//             db.query(fetchDayEntryQuery, [deviceId], (fetchError, fetchResult) => {
+//               if (fetchError) {
+//                 console.error(`Error while fetching day entry for day ${dayOffset}:`, fetchError);
+//                 reject(fetchError);
+//               } else {
+//                 const dayConsumption = fetchResult.length > 0 ? fetchResult[0].totalVolume : 0;
+//                 resolve(dayConsumption);
+//               }
+//             });
+//           });
+//         };
+
+//         // Fetch today's and yesterday's consumption concurrently
+//         const todayPromise = fetchDayEntry(0);
+//         const yesterdayPromise = fetchDayEntry(1);
+
+//         // Push promises into the array
+//         promises.push(
+//           Promise.all([todayPromise, yesterdayPromise])
+//             .then(([todayConsumption, yesterdayConsumption]) => ({
+//               [deviceId]: [{ today: todayConsumption, yesterday: yesterdayConsumption }],
+//             }))
+//         );
+//       });
+
+//       // Wait for all promises to resolve
+//       Promise.all(promises)
+//         .then((consumptionData) => {
+//           res.json(consumptionData);
+//         })
+//         .catch((error) => {
+//           console.error('Error in device retrieval:', error);
+//           res.status(500).json({ message: 'Internal server error' });
+//         });
+//     });
+//   } catch (error) {
+//     console.error('Error in device retrieval:', error);
+//     res.status(500).json({ message: 'Internal server error' });
+//   }
+// }
+async function getTotalVolumeForTodayEmail(req, res) {
   const { CompanyEmail } = req.params;
 
-  try {
-    // Fetch devices for the given company email
-    const fetchDevicesQuery = 'SELECT * FROM tms_devices WHERE CompanyEmail = ? AND (DeviceType = "ws" OR DeviceType = "fs" OR DeviceType = "ts")';
-    db.query(fetchDevicesQuery, [CompanyEmail], (fetchError, devices) => {
-      if (fetchError) {
-        console.error('Error while fetching devices:', fetchError);
-        return res.status(500).json({ message: 'Internal server error' });
-      }
-
-      // Array to store promises for fetching consumption data
-      const promises = [];
-
-      // Iterate through each device
-      devices.forEach(device => {
-        const deviceId = device.DeviceUID;
-
-        // Function to fetch the latest entry for a specific day
-        const fetchDayEntry = (dayOffset) => {
-          const fetchDayEntryQuery = `
-            SELECT * FROM tms_Day_Consumption 
-            WHERE DeviceUID = ? AND DATE(TimeStamp) = CURDATE() - INTERVAL ${dayOffset} DAY
-            ORDER BY TimeStamp DESC LIMIT 1
-          `;
-
-          return new Promise((resolve, reject) => {
-            db.query(fetchDayEntryQuery, [deviceId], (fetchError, fetchResult) => {
-              if (fetchError) {
-                console.error(`Error while fetching day entry for day ${dayOffset}:`, fetchError);
-                reject(fetchError);
-              } else {
-                const dayConsumption = fetchResult.length > 0 ? fetchResult[0].totalVolume : 0;
-                resolve(dayConsumption);
-              }
-            });
-          });
-        };
-
-        // Fetch today's and yesterday's consumption concurrently
-        const todayPromise = fetchDayEntry(0);
-        const yesterdayPromise = fetchDayEntry(1);
-
-        // Push promises into the array
-        promises.push(
-          Promise.all([todayPromise, yesterdayPromise])
-            .then(([todayConsumption, yesterdayConsumption]) => ({
-              [deviceId]: [{ today: todayConsumption, yesterday: yesterdayConsumption }],
-            }))
-        );
+  // Helper function to execute database queries with promises
+  const executeQuery = (query, params) => {
+    return new Promise((resolve, reject) => {
+      db.query(query, params, (error, results) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(results);
+        }
       });
-
-      // Wait for all promises to resolve
-      Promise.all(promises)
-        .then((consumptionData) => {
-          res.json(consumptionData);
-        })
-        .catch((error) => {
-          console.error('Error in device retrieval:', error);
-          res.status(500).json({ message: 'Internal server error' });
-        });
     });
+  };
+
+  try {
+    // SQL query to fetch total volumes for today and yesterday
+    const fetchVolumeQuery = `
+      SELECT 
+        d.DeviceUID,
+        MAX(CASE WHEN DATE(c.TimeStamp) = CURDATE() THEN c.totalVolume ELSE NULL END) - 
+        MIN(CASE WHEN DATE(c.TimeStamp) = CURDATE() THEN c.totalVolume ELSE NULL END) AS todayVolume,
+        MAX(CASE WHEN DATE(c.TimeStamp) = CURDATE() - INTERVAL 1 DAY THEN c.totalVolume ELSE NULL END) - 
+        MIN(CASE WHEN DATE(c.TimeStamp) = CURDATE() - INTERVAL 1 DAY THEN c.totalVolume ELSE NULL END) AS yesterdayVolume
+      FROM 
+        tms_devices d
+      LEFT JOIN 
+        clean_data c ON d.DeviceUID = c.DeviceUID
+      WHERE 
+        d.CompanyEmail = ? 
+        AND d.DeviceType IN ('ws', 'fs', 'ts')
+      GROUP BY 
+        d.DeviceUID;
+    `;
+
+    // Execute the query
+    const results = await executeQuery(fetchVolumeQuery, [CompanyEmail]);
+
+    // Format the data to match the required response structure
+    const formattedData = results.map((row) => ({
+      [row.DeviceUID]: [
+        {
+          today: row.todayVolume || 0,
+          yesterday: row.yesterdayVolume || 0,
+        },
+      ],
+    }));
+
+    // Send the formatted data as the response
+    res.json(formattedData);
   } catch (error) {
-    console.error('Error in device retrieval:', error);
+    console.error('Error while fetching total volume data:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 }
@@ -1192,78 +1248,6 @@ async function getTotalVolumeForMonthEmail(req, res) {
     res.status(500).json({ message: 'Internal server error' });
   }
 }
-
-
-// function getTotalVolumeForMonthEmail(req, res) {
-//   const { CompanyEmail } = req.params;
-
-//   try {
-//     // Fetch devices for the given company email
-//     const fetchDevicesQuery = 'SELECT * FROM tms_devices WHERE CompanyEmail = ? AND (DeviceType = "ws" OR DeviceType = "fs" OR DeviceType = "ts")';
-
-//     db.query(fetchDevicesQuery, [CompanyEmail], (fetchError, devices) => {
-//       if (fetchError) {
-//         console.error('Error while fetching devices:', fetchError);
-//         return res.status(500).json({ message: 'Internal server error' });
-//       }
-
-//       // Array to store promises for fetching consumption data
-//       const promises = [];
-
-//       // Iterate through each device
-//       devices.forEach(device => {
-//         const deviceId = device.DeviceUID;
-
-//         // Function to fetch total volume for a specific month
-//         const fetchTotalVolumeForMonth = (monthOffset) => {
-//           const fetchTotalVolumeQuery = `
-//             SELECT SUM(totalVolume) AS totalVolume
-//             FROM tms_Day_Consumption 
-//             WHERE DeviceUID = ? AND MONTH(TimeStamp) = MONTH(CURDATE() - INTERVAL ${monthOffset} MONTH)
-//           `;
-
-//           return new Promise((resolve, reject) => {
-//             db.query(fetchTotalVolumeQuery, [deviceId], (fetchError, fetchResult) => {
-//               if (fetchError) {
-//                 console.error(`Error while fetching total volume for month ${monthOffset}:`, fetchError);
-//                 reject(fetchError);
-//               } else {
-//                 const totalVolume = fetchResult[0].totalVolume || 0;
-//                 resolve(totalVolume);
-//               }
-//             });
-//           });
-//         };
-
-//         // Fetch total volume for the current month and previous month concurrently
-//         const currentMonthPromise = fetchTotalVolumeForMonth(0);
-//         const previousMonthPromise = fetchTotalVolumeForMonth(1);
-
-//         // Push promises into the array
-//         promises.push(
-//           Promise.all([currentMonthPromise, previousMonthPromise])
-//             .then(([currentMonthTotalVolume, previousMonthTotalVolume]) => ({
-//               [deviceId]: [{ thisMonth: currentMonthTotalVolume, lastMonth: previousMonthTotalVolume }],
-//             }))
-//         );
-//       });
-
-//       // Wait for all promises to resolve
-//       Promise.all(promises)
-//         .then((consumptionData) => {
-//           res.json(consumptionData);
-//         })
-//         .catch((error) => {
-//           console.error('Error in device retrieval:', error);
-//           res.status(500).json({ message: 'Internal server error' });
-//         });
-//     });
-//   } catch (error) {
-//     console.error('Error in device retrieval:', error);
-//     res.status(500).json({ message: 'Internal server error' });
-//   }
-// }
-
 
 function getTotalVolumeForDuration(req, res) {
   const { deviceId } = req.params;
