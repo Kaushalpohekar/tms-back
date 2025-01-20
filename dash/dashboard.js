@@ -1136,75 +1136,133 @@ function getTotalVolumeForMonth(req, res) {
   }
 }
 
-function getTotalVolumeForMonthEmail(req, res) {
+async function getTotalVolumeForMonthEmail(req, res) {
   const { CompanyEmail } = req.params;
 
-  try {
-    // Fetch devices for the given company email
-    const fetchDevicesQuery = 'SELECT * FROM tms_devices WHERE CompanyEmail = ? AND (DeviceType = "ws" OR DeviceType = "fs" OR DeviceType = "ts")';
-
-    db.query(fetchDevicesQuery, [CompanyEmail], (fetchError, devices) => {
-      if (fetchError) {
-        console.error('Error while fetching devices:', fetchError);
-        return res.status(500).json({ message: 'Internal server error' });
-      }
-
-      // Array to store promises for fetching consumption data
-      const promises = [];
-
-      // Iterate through each device
-      devices.forEach(device => {
-        const deviceId = device.DeviceUID;
-
-        // Function to fetch total volume for a specific month
-        const fetchTotalVolumeForMonth = (monthOffset) => {
-          const fetchTotalVolumeQuery = `
-            SELECT SUM(totalVolume) AS totalVolume
-            FROM tms_Day_Consumption 
-            WHERE DeviceUID = ? AND MONTH(TimeStamp) = MONTH(CURDATE() - INTERVAL ${monthOffset} MONTH)
-          `;
-
-          return new Promise((resolve, reject) => {
-            db.query(fetchTotalVolumeQuery, [deviceId], (fetchError, fetchResult) => {
-              if (fetchError) {
-                console.error(`Error while fetching total volume for month ${monthOffset}:`, fetchError);
-                reject(fetchError);
-              } else {
-                const totalVolume = fetchResult[0].totalVolume || 0;
-                resolve(totalVolume);
-              }
-            });
-          });
-        };
-
-        // Fetch total volume for the current month and previous month concurrently
-        const currentMonthPromise = fetchTotalVolumeForMonth(0);
-        const previousMonthPromise = fetchTotalVolumeForMonth(1);
-
-        // Push promises into the array
-        promises.push(
-          Promise.all([currentMonthPromise, previousMonthPromise])
-            .then(([currentMonthTotalVolume, previousMonthTotalVolume]) => ({
-              [deviceId]: [{ thisMonth: currentMonthTotalVolume, lastMonth: previousMonthTotalVolume }],
-            }))
-        );
+  // Helper function to execute database queries with promises
+  const executeQuery = (query, params) => {
+    return new Promise((resolve, reject) => {
+      db.query(query, params, (error, results) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(results);
+        }
       });
-
-      // Wait for all promises to resolve
-      Promise.all(promises)
-        .then((consumptionData) => {
-          res.json(consumptionData);
-        })
-        .catch((error) => {
-          console.error('Error in device retrieval:', error);
-          res.status(500).json({ message: 'Internal server error' });
-        });
     });
+  };
+
+  try {
+    // SQL query to fetch total volumes for the current and previous months
+    const fetchVolumeQuery = `
+      SELECT 
+        d.DeviceUID,
+        MAX(CASE WHEN MONTH(c.TimeStamp) = MONTH(CURDATE()) THEN c.totalVolume ELSE NULL END) - 
+        MIN(CASE WHEN MONTH(c.TimeStamp) = MONTH(CURDATE()) THEN c.totalVolume ELSE NULL END) AS thisMonthVolume,
+        MAX(CASE WHEN MONTH(c.TimeStamp) = MONTH(CURDATE() - INTERVAL 1 MONTH) THEN c.totalVolume ELSE NULL END) - 
+        MIN(CASE WHEN MONTH(c.TimeStamp) = MONTH(CURDATE() - INTERVAL 1 MONTH) THEN c.totalVolume ELSE NULL END) AS lastMonthVolume
+      FROM 
+        tms_devices d
+      LEFT JOIN 
+        clean_data c ON d.DeviceUID = c.DeviceUID
+      WHERE 
+        d.CompanyEmail = ? 
+        AND d.DeviceType IN ('ws', 'fs', 'ts')
+      GROUP BY 
+        d.DeviceUID;
+    `;
+
+    // Execute the query
+    const results = await executeQuery(fetchVolumeQuery, [CompanyEmail]);
+
+    // Format the data to match the required response structure
+    const formattedData = results.map((row) => ({
+      [row.DeviceUID]: [
+        {
+          thisMonth: row.thisMonthVolume || 0,
+          lastMonth: row.lastMonthVolume || 0,
+        },
+      ],
+    }));
+
+    // Send the formatted data as the response
+    res.json(formattedData);
   } catch (error) {
-    console.error('Error in device retrieval:', error);
+    console.error('Error while fetching total volume data:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 }
+
+
+// function getTotalVolumeForMonthEmail(req, res) {
+//   const { CompanyEmail } = req.params;
+
+//   try {
+//     // Fetch devices for the given company email
+//     const fetchDevicesQuery = 'SELECT * FROM tms_devices WHERE CompanyEmail = ? AND (DeviceType = "ws" OR DeviceType = "fs" OR DeviceType = "ts")';
+
+//     db.query(fetchDevicesQuery, [CompanyEmail], (fetchError, devices) => {
+//       if (fetchError) {
+//         console.error('Error while fetching devices:', fetchError);
+//         return res.status(500).json({ message: 'Internal server error' });
+//       }
+
+//       // Array to store promises for fetching consumption data
+//       const promises = [];
+
+//       // Iterate through each device
+//       devices.forEach(device => {
+//         const deviceId = device.DeviceUID;
+
+//         // Function to fetch total volume for a specific month
+//         const fetchTotalVolumeForMonth = (monthOffset) => {
+//           const fetchTotalVolumeQuery = `
+//             SELECT SUM(totalVolume) AS totalVolume
+//             FROM tms_Day_Consumption 
+//             WHERE DeviceUID = ? AND MONTH(TimeStamp) = MONTH(CURDATE() - INTERVAL ${monthOffset} MONTH)
+//           `;
+
+//           return new Promise((resolve, reject) => {
+//             db.query(fetchTotalVolumeQuery, [deviceId], (fetchError, fetchResult) => {
+//               if (fetchError) {
+//                 console.error(`Error while fetching total volume for month ${monthOffset}:`, fetchError);
+//                 reject(fetchError);
+//               } else {
+//                 const totalVolume = fetchResult[0].totalVolume || 0;
+//                 resolve(totalVolume);
+//               }
+//             });
+//           });
+//         };
+
+//         // Fetch total volume for the current month and previous month concurrently
+//         const currentMonthPromise = fetchTotalVolumeForMonth(0);
+//         const previousMonthPromise = fetchTotalVolumeForMonth(1);
+
+//         // Push promises into the array
+//         promises.push(
+//           Promise.all([currentMonthPromise, previousMonthPromise])
+//             .then(([currentMonthTotalVolume, previousMonthTotalVolume]) => ({
+//               [deviceId]: [{ thisMonth: currentMonthTotalVolume, lastMonth: previousMonthTotalVolume }],
+//             }))
+//         );
+//       });
+
+//       // Wait for all promises to resolve
+//       Promise.all(promises)
+//         .then((consumptionData) => {
+//           res.json(consumptionData);
+//         })
+//         .catch((error) => {
+//           console.error('Error in device retrieval:', error);
+//           res.status(500).json({ message: 'Internal server error' });
+//         });
+//     });
+//   } catch (error) {
+//     console.error('Error in device retrieval:', error);
+//     res.status(500).json({ message: 'Internal server error' });
+//   }
+// }
 
 
 function getTotalVolumeForDuration(req, res) {
