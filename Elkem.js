@@ -224,42 +224,42 @@ const mqttClient = mqtt.connect(broker, options);
 const conditions = {
   SL_LoRa_00001: [
     { fields: ['field1', 'field2'], deviceUID: 'SL_LoRa_00001_01', extraFields: ['totalVolume', 'flowRate'] },
-    { fields: ['field3'], deviceUID: 'SL_LoRa_00001_02', extraFields: ['flowRate'] },
   ],
   SL_LoRa_00002: [
     { fields: ['field1', 'field2'], deviceUID: 'SL_LoRa_00002_01', extraFields: ['totalVolume', 'flowRate'] },
+    { fields: ['field3', 'field3'], deviceUID: 'SL_LoRa_00002_02', extraFields: ['totalVolume', 'flowRate'] },
   ],
   SL_LoRa_00003: [
     { fields: ['field1', 'field2'], deviceUID: 'SL_LoRa_00003_01', extraFields: ['totalVolume', 'flowRate'] },
+    { fields: ['field3', 'field4'], deviceUID: 'SL_LoRa_00003_02', extraFields: ['totalVolume', 'flowRate'] },
+    { fields: ['field5', 'field6'], deviceUID: 'SL_LoRa_00004_03', extraFields: ['totalVolume', 'flowRate'] },
+    { fields: ['field7'], deviceUID: 'SL_LoRa_00003_04', extraFields: ['level'] },
+    { fields: ['field8'], deviceUID: 'SL_LoRa_00003_05', extraFields: ['level'] },
+    { fields: ['field9'], deviceUID: 'SL_LoRa_00003_06', extraFields: ['level'] },
+    { fields: ['field10', 'field11'], deviceUID: 'SL_LoRa_00003_07', extraFields: ['totalVolume', 'flowRate'] },
+    { fields: ['field12'], deviceUID: 'SL_LoRa_00003_08', extraFields: ['level'] },
   ],
   SL_LoRa_00004: [
     { fields: ['field1', 'field2'], deviceUID: 'SL_LoRa_00004_01', extraFields: ['totalVolume', 'flowRate'] },
   ],
   SL_LoRa_00005: [
     { fields: ['field1', 'field2'], deviceUID: 'SL_LoRa_00005_01', extraFields: ['totalVolume', 'flowRate'] },
-    { fields: ['field3', 'field4'], deviceUID: 'SL_LoRa_00005_02', extraFields: ['totalVolume', 'flowRate'] },
-    { fields: ['field5', 'field6'], deviceUID: 'SL_LoRa_00005_03', extraFields: ['totalVolume', 'flowRate'] },
-    { fields: ['field7'], deviceUID: 'SL_LoRa_00005_04', extraFields: ['flowRate'] },
-    { fields: ['field8'], deviceUID: 'SL_LoRa_00005_05', extraFields: ['flowRate'] },
-    { fields: ['field9'], deviceUID: 'SL_LoRa_00005_06', extraFields: ['flowRate'] },
-    { fields: ['field10', 'field11'], deviceUID: 'SL_LoRa_00005_07', extraFields: ['totalVolume', 'flowRate'] },
   ],
   SL_LoRa_00006: [
     { fields: ['field1', 'field2'], deviceUID: 'SL_LoRa_00006_01', extraFields: ['totalVolume', 'flowRate'] },
-    { fields: ['field3', 'field4'], deviceUID: 'SL_LoRa_00006_02', extraFields: ['totalVolume', 'flowRate'] },
-    { fields: ['field5', 'field6'], deviceUID: 'SL_LoRa_00006_03', extraFields: ['totalVolume', 'flowRate'] },
-    { fields: ['field7'], deviceUID: 'SL_LoRa_00006_04', extraFields: ['flowRate'] },
-    { fields: ['field8'], deviceUID: 'SL_LoRa_00006_05', extraFields: ['flowRate'] },
-    { fields: ['field9'], deviceUID: 'SL_LoRa_00006_06', extraFields: ['flowRate'] },
-    { fields: ['field10', 'field11'], deviceUID: 'SL_LoRa_00006_07', extraFields: ['totalVolume', 'flowRate'] },
+    { fields: ['field3'], deviceUID: 'SL_LoRa_00006_02', extraFields: ['level'] },
   ],
   SL_LoRa_00007: [
     { fields: ['field1', 'field2'], deviceUID: 'SL_LoRa_00007_01', extraFields: ['totalVolume', 'flowRate'] },
     { fields: ['field3', 'field4'], deviceUID: 'SL_LoRa_00007_02', extraFields: ['totalVolume', 'flowRate'] },
+    { fields: ['field5', 'field6'], deviceUID: 'SL_LoRa_00007_03', extraFields: ['totalVolume', 'flowRate'] },
+    { fields: ['field7'], deviceUID: 'SL_LoRa_00007_04', extraFields: ['level'] },
+    { fields: ['field8'], deviceUID: 'SL_LoRa_00007_05', extraFields: ['level'] },
+    { fields: ['field9'], deviceUID: 'SL_LoRa_00007_06', extraFields: ['level'] },
+    { fields: ['field10', 'field11'], deviceUID: 'SL_LoRa_00007_07', extraFields: ['totalVolume', 'flowRate'] },
   ],
   SL_LoRa_00008: [
     { fields: ['field1', 'field2'], deviceUID: 'SL_LoRa_00008_01', extraFields: ['totalVolume', 'flowRate'] },
-    { fields: ['field3', 'field4'], deviceUID: 'SL_LoRa_00008_02', extraFields: ['totalVolume', 'flowRate'] },
   ],
 };
 
@@ -321,6 +321,7 @@ mqttClient.on('message', (topic, message) => {
 
 function InsertIntoDataBase(data) {
   console.log('Data to insert:', data);
+  PublishToNewTopic(data);
   const insertQuery = `
     INSERT INTO actual_data (DeviceUID, Temperature, Timestamp, TemperatureR, TemperatureY, TemperatureB, Humidity, flowRate, Pressure, totalVolume, ip_address)
     VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?)
@@ -333,7 +334,7 @@ function InsertIntoDataBase(data) {
     data.TemperatureY || null,
     data.TemperatureB || null,
     data.Humidity || null,
-    data.flowRate || null,
+    data.flowRate || data.level ||null ,
     data.Pressure || null,
     data.totalVolume || null,
     localIpAddress,
@@ -344,6 +345,19 @@ function InsertIntoDataBase(data) {
       console.error('Error inserting data into MySQL:', error);
     } else {
       console.log('Data inserted into MySQL');
+    }
+  });
+}
+
+function PublishToNewTopic(data) {
+  const topic = `Elkem/Water/${data.DeviceUID}`;
+  const payload = JSON.stringify(data);
+
+  mqttClient.publish(topic, payload, { qos: 1 }, (err) => {
+    if (err) {
+      console.error(`Failed to publish data to topic ${topic}:`, err);
+    } else {
+      console.log(`Data published to topic ${topic}`);
     }
   });
 }
