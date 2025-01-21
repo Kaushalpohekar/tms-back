@@ -43,7 +43,7 @@ const credentials = { key: privateKey, cert: fullchain };
 const app = express();
 const port = 3000;
 
-const allowedOrigins = ['https://senso.senselive.io', 'http://localhost:4200'];
+const allowedOrigins = ['https://senso.senselive.io', 'senso.senselive.io'];
 
 // const corsOptions = {
 //   origin: (origin, callback) => {
