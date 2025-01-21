@@ -59,7 +59,6 @@ mqttClient.on('connect', () => {
 mqttClient.on('message', (topic, message) => {
   try {
     const data = JSON.parse(message);
-
     const insertQuery = `
     INSERT INTO actual_data (DeviceUID, Temperature, Timestamp, TemperatureR, TemperatureY, TemperatureB, Humidity, flowRate, Pressure, totalVolume, ip_address)
     VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?)
@@ -82,11 +81,11 @@ mqttClient.on('message', (topic, message) => {
       if (error) {
         console.error('Error inserting data into MySQL:', error);
       } else {
-        console.log('Data inserted into MySQL');
+        console.log('Data inserted into MySQL:- ', data.DeviceUID || data.device_uid);
       }
     });
   } catch (error) {
-    console.error('Error processing message:', error);
+    //console.error('Error processing message:', error);
   }
 });
 
