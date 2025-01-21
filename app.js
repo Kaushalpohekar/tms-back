@@ -75,6 +75,7 @@ app.use((req, res, next) => {
   // Log the origin and host for debugging
   console.log(`Request received from Origin: ${origin}, Host: ${host}`);
   if (!origin || !allowedOrigins.includes(origin)) {
+    console.error(`Access Denied: Origin "${origin}" or Host "${host}" is not allowed.`);
     return res.status(403).sendFile(path.join(__dirname, 'public', 'access_denied.html'));
   }
   next();
