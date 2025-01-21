@@ -632,7 +632,7 @@ function getUserDetails(req, res) {
   }
 
   // Fetch user details from the database using the decoded token information
-  const query = 'SELECT * FROM tms_users WHERE Username = ?';
+  const query = 'SELECT UserId, Username, FirstName, LastName, CompanyName, CompanyEmail, ContactNo, Location, UserType, PersonalEmail, Designation, Verified, is_online, block FROM tms_users WHERE Username = ?';
   db.query(query, [decodedToken.Username], (error, rows) => {
     if (error) {
       console.error(error);

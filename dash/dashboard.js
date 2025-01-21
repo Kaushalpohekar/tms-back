@@ -725,7 +725,7 @@ function getUserData(req, res) {
 
     // Validate the deviceId parameter if necessary
 
-    const userDetailsQuery = 'SELECT * FROM tms_users WHERE UserId = ?';
+    const userDetailsQuery = 'SELECT UserId, Username, FirstName, LastName, CompanyName, CompanyEmail, ContactNo, Location, UserType, PersonalEmail, Designation, Verified, is_online, block FROM tms_users WHERE UserId = ?';
     db.query(userDetailsQuery, [userId], (error, userDetail) => {
       if (error) {
         console.error('Error fetching User:', error);
@@ -864,7 +864,7 @@ function getUserMessages(req, res) {
 function fetchCompanyUser(req, res) {
   const CompanyEmail = req.params.CompanyEmail;
   try {
-    const query = 'SELECT * FROM tms_users where CompanyEmail = ?';
+    const query = 'SELECT UserId, FirstName, LastName, ContactNo, Location, UserType, PersonalEmail, Designation, is_online FROM tms_users where CompanyEmail = ?';
     db.query(query, [CompanyEmail], (error, users) => {
       if (error) {
         throw new Error('Error fetching users');
