@@ -61,17 +61,16 @@ const allowedOrigins = ['https://elkem.senselive.in', 'http://localhost:4000']; 
 
 
 app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  const host = req.headers.host;
+  const origin = req.headers.origin || req.headers.host; // Use host if origin is undefined
+  console.log(`Request received from Origin: ${origin}, Host: ${req.headers.host}`);
 
-  // Log the origin and host for debugging
-  console.log(`Request received from Origin: ${origin}, Host: ${host}`);
-  if (!allowedOrigins.includes(origin)) {
-    // Serve the access denied HTML page if the origin is not allowed
-    console.error(`Access Denied: Origin "${origin}" or Host "${host}" is not allowed.`);
+  // Allow requests with undefined origin or matching allowed origins
+  if (!origin || allowedOrigins.includes(origin)) {
+    next();
+  } else {
+    console.error(`Access Denied: Origin "${origin}" or Host "${req.headers.host}" is not allowed.`);
     return res.status(403).sendFile(path.join(__dirname, 'public', 'access_denied.html'));
   }
-  next();
 });
 
 app.use(cors());
