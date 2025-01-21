@@ -57,7 +57,7 @@ const app = express();
 const port = 4000;
 
 // CORS Configuration
-const allowedOrigins = ['https://elkem.senselive.in', 'http://localhost:4200']; // Update with your actual allowed origins
+const allowedOrigins = ['https://elkem.senselive.in', 'http://localhost:4000']; // Update with your actual allowed origins
 
 
 app.use((req, res, next) => {
