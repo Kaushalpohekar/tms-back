@@ -463,7 +463,36 @@ async function fetchLatestDeviceData(req, res) {
     }
 }
 
+function fetchLatestEntryAllDevices(req, res) {
+    const optimizedQuery = `
+      SELECT DISTINCT ad.DeviceUID, ad.TimeStamp
+      FROM (
+        SELECT DISTINCT DeviceUID, MAX(EntryID) AS MaxEntryID
+        FROM actual_data
+        GROUP BY DeviceUID
+      ) latest_entry
+      LEFT JOIN actual_data ad ON latest_entry.MaxEntryID = ad.EntryID;
+    `;
+  
+    db.query(optimizedQuery, [], (error, results) => {
+      if (error) {
+        return res.status(500).json({ message: 'Error while fetching data', error });
+      }
+  
+      const latestEntries = results.map(result => ({
+        DeviceUID: result.DeviceUID || null,
+        TimeStamp: result.TimeStamp || null,
+      }));
+  
+      if (latestEntries.length === 0) {
+        latestEntries.push({ DeviceUID: null, TimeStamp: null });
+      }
+  
+      res.json({ latestEntry: latestEntries });
+    });
+  }
 
+  
 
 module.exports = {
     fetchAllDevices,
@@ -477,5 +506,6 @@ module.exports = {
     getDataByTimeInterval,
     fetchAllCompanies,
     fetchDeviceData,
-    fetchLatestDeviceData
+    fetchLatestDeviceData,
+    fetchLatestEntryAllDevices
 }

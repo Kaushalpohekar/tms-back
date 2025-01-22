@@ -99,4 +99,5 @@ router.get('/getCountsDataForCharts/intervals', authenticateUser, newSa.getDataB
 router.get('/fetchAllCompanies', authenticateUser, newSa.fetchAllCompanies);
 router.get('/fetchDeviceData/:deviceUID', authenticateUser, newSa.fetchDeviceData);
 router.get('/fetchLatestDeviceData/:deviceUID', authenticateUser, newSa.fetchLatestDeviceData);
+router.get('/fetchLatestEntryAllDevices', authenticateUser, newSa.fetchLatestEntryAllDevices);
 module.exports = router;
