@@ -149,7 +149,7 @@ async function InsertIntoDataBase(data) {
     data.TemperatureY || null,
     data.TemperatureB || null,
     data.Humidity || null,
-    data.flowRate || null,
+    data.flowRate || null || data.level,
     data.Pressure || null,
     data.totalVolume || null,
     localIpAddress,
