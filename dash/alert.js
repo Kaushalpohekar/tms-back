@@ -172,7 +172,7 @@ async function sendAlert(device, temperature) {
 
         const mailOptions = {
             from: "donotreplysenselive@gmail.com",
-            to: "kaushalpohekar85@gmail.com",//device.PersonalEmail,
+            to: device.PersonalEmail,
             subject: `Alert: Device ${device.DeviceName} Triggered`,
             html: emailHtml,
         };
