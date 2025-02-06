@@ -2,8 +2,8 @@ const mysql = require("mysql2/promise");
 const mqtt = require("mqtt");
 const nodemailer = require("nodemailer");
 const ejs = require("ejs");
+const fs = require("fs");
 const path = require("path");
-
 
 const MQTT_BROKER = "ws://dashboard.senselive.in:9001";
 const MQTT_USERNAME = "Sense2023";
@@ -99,9 +99,46 @@ async function processTrigger(deviceUID, payload) {
     }
 }
 
+// async function sendAlert(device, temperature) {
+//     if (!device.Mail || device.Mail === "0") {
+//         //console.log(`Email alerts are disabled for ${deviceUID}.`);
+//         return;
+//     }
+
+//     const formattedTimestamp = new Intl.DateTimeFormat("en-US", {
+//         month: "short",
+//         day: "2-digit",
+//         year: "numeric",
+//         hour: "2-digit",
+//         minute: "2-digit",
+//         second: "2-digit",
+//         hour12: true,
+//     }).format(new Date());
+
+//     const emailHtml = await ejs.renderFile(path.join(__dirname, "mail-body", "demo.ejs"), {
+//         deviceName: device.DeviceName,
+//         thresholdTemp: device.TriggerValue,
+//         currentTemp: temperature,
+//         timestamp: formattedTimestamp
+//     });
+
+//     const mailOptions = {
+//         from: "donotreplysenselive@gmail.com",
+//         to: device.PersonalEmail,
+//         subject: `Alert: Device ${device.DeviceName} Triggered`,
+//         html: emailHtml
+//     };
+
+//     try {
+//         const info = await transporter.sendMail(mailOptions);
+//         //console.log(`Alert sent to ${device.PersonalEmail}:`, info.response);
+//     } catch (error) {
+//         //console.error(`Error sending email to ${device.PersonalEmail}:`, error);
+//     }
+// }
+
 async function sendAlert(device, temperature) {
     if (!device.Mail || device.Mail === "0") {
-        //console.log(`Email alerts are disabled for ${deviceUID}.`);
         return;
     }
 
@@ -115,26 +152,37 @@ async function sendAlert(device, temperature) {
         hour12: true,
     }).format(new Date());
 
-    const emailHtml = await ejs.renderFile(path.join(__dirname, "mail-body", "demo.ejs"), {
-        deviceName: device.DeviceName,
-        thresholdTemp: device.TriggerValue,
-        currentTemp: temperature,
-        timestamp: formattedTimestamp
+    const templatePath = path.join(__dirname, "../mail-body/demo.ejs");
+
+    fs.readFile(templatePath, "utf8", (err, templateData) => {
+        if (err) {
+            console.error("Error reading email template:", err);
+            return;
+        }
+
+        const compiledTemplate = ejs.compile(templateData);
+        const emailHtml = compiledTemplate({
+            deviceName: device.DeviceName,
+            thresholdTemp: device.TriggerValue,
+            currentTemp: temperature,
+            timestamp: formattedTimestamp,
+        });
+
+        const mailOptions = {
+            from: "donotreplysenselive@gmail.com",
+            to: device.PersonalEmail,
+            subject: `Alert: Device ${device.DeviceName} Triggered`,
+            html: emailHtml,
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                console.error(`Error sending email to ${device.PersonalEmail}:`, error);
+            } else {
+                console.log(`✅ Alert sent to ${device.PersonalEmail}:`, info.response);
+            }
+        });
     });
-
-    const mailOptions = {
-        from: "donotreplysenselive@gmail.com",
-        to: device.PersonalEmail,
-        subject: `Alert: Device ${device.DeviceName} Triggered`,
-        html: emailHtml
-    };
-
-    try {
-        const info = await transporter.sendMail(mailOptions);
-        //console.log(`Alert sent to ${device.PersonalEmail}:`, info.response);
-    } catch (error) {
-        //console.error(`Error sending email to ${device.PersonalEmail}:`, error);
-    }
 }
 
 const mqttClient = mqtt.connect(MQTT_BROKER, {
