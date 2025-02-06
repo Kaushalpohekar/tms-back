@@ -2,6 +2,8 @@ const mysql = require("mysql2/promise");
 const mqtt = require("mqtt");
 const nodemailer = require("nodemailer");
 const ejs = require("ejs");
+const path = require("path");
+
 
 const MQTT_BROKER = "ws://dashboard.senselive.in:9001";
 const MQTT_USERNAME = "Sense2023";
@@ -113,7 +115,7 @@ async function sendAlert(device, temperature) {
         hour12: true,
     }).format(new Date());
 
-    const emailHtml = await ejs.renderFile("../mail-body/demo.ejs", {
+    const emailHtml = await ejs.renderFile(path.join(__dirname, "mail-body", "demo.ejs"), {
         deviceName: device.DeviceName,
         thresholdTemp: device.TriggerValue,
         currentTemp: temperature,
