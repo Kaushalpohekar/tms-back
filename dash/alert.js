@@ -54,7 +54,8 @@ const transporter = nodemailer.createTransport({
             if (!existingDevice || 
                 existingDevice.interval !== interval || 
                 existingDevice.Mail !== Mail || 
-                existingDevice.Whatsapp !== Whatsapp) {
+                existingDevice.Whatsapp !== Whatsapp ||
+                existingDevice.TriggerValue !== TriggerValue) {
 
                 deviceMap.set(DeviceUID, {
                     DeviceName, DeviceType, interval, PersonalEmail, Whatsapp, TriggerValue, Mail
