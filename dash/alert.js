@@ -1,136 +1,164 @@
-const db = require('../db');
+const mysql = require("mysql2/promise");
+const mqtt = require("mqtt");
+const nodemailer = require("nodemailer");
+const ejs = require("ejs");
 
-async function fetchLatestEntry(req, res) {
-  try {
-    const deviceQuery = `
-      SELECT tms_trigger.DeviceUID, tms_trigger.ContactNO, tms_trigger.DeviceName, tms_trigger.TriggerValue, tms_trigger.interval, tms_trigger.Whatsapp  
-      FROM tms_trigger
-      JOIN tms_devices ON tms_trigger.DeviceUID = tms_devices.DeviceUID
-      WHERE tms_trigger.Whatsapp = 1;
-    `;
-  
-    const fetchLatestEntryQuery = `
-      SELECT * FROM actual_data WHERE DeviceUID = ? ORDER BY EntryID DESC LIMIT 1
-    `;
-  
-    const defaultEntry = {
-      EntryID: 0,
-      DeviceUID: null,
-      Temperature: null,
-      TemperatureR: null,
-      TemperatureY: null,
-      TemperatureB: null,
-      Humidity: null,
-      flowRate: null,
-      totalVolume: null,
-      TimeStamp: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      ip_address: "0.0.0.0",
-      status: null
-    };
-  
-    const devices = await new Promise((resolve, reject) => {
-      db.query(deviceQuery, (fetchUserDevicesError, devices) => {
-        if (fetchUserDevicesError) {
-          reject(fetchUserDevicesError);
-        } else {
-          resolve(devices);
-        }
-      });
-    });
-  
-    if (devices.length === 0) {
-      return res.status(404).json({ message: 'No devices found for the user' });
-    }
-  
-    const promises = devices.map(async ({ DeviceUID }) => {
-      try {
-        const fetchLatestEntryResult = await new Promise((resolve, reject) => {
-          db.query(fetchLatestEntryQuery, [DeviceUID], (fetchLatestEntryError, result) => {
-            if (fetchLatestEntryError) {
-              reject(fetchLatestEntryError);
-            } else {
-              resolve(result);
+const MQTT_BROKER = "ws://dashboard.senselive.in:9001";
+const MQTT_USERNAME = "Sense2023";
+const MQTT_PASSWORD = "sense123"; 
+
+let deviceMap = new Map();
+let lastSentMap = new Map();
+
+const db = mysql.createPool({
+    host: "sl02-mysql.mysql.database.azure.com",
+    user: "senselive",
+    password: "SenseLive@2030",
+    database: "tms",
+    ssl: {
+        rejectUnauthorized: false,
+    },
+});
+
+
+const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: {
+      user: 'donotreplysenselive@gmail.com',
+      pass: 'xgcklimtlbswtzfq',
+    },
+  });
+
+  async function fetchDeviceData() {
+    try {
+        const [rows] = await db.query(`
+            SELECT 
+                d.DeviceUID, d.DeviceName, d.DeviceType, 
+                t.interval, t.PersonalEmail, t.Whatsapp, t.TriggerValue, t.Mail
+            FROM tms_devices d
+            JOIN tms_trigger t ON d.DeviceUID = t.DeviceUID
+            WHERE d.DeviceType IN ('T', 'TH', 'RYB', 't', 'th', 'ryb')
+        `);
+
+        rows.forEach(device => {
+            let { DeviceUID, DeviceName, DeviceType, interval, PersonalEmail, Whatsapp, TriggerValue, Mail } = device;
+            interval = parseInt(interval) || 10; // Default to 10 minutes
+
+            let existingDevice = deviceMap.get(DeviceUID);
+
+            // Only update if there's a change
+            if (!existingDevice || 
+                existingDevice.interval !== interval || 
+                existingDevice.Mail !== Mail || 
+                existingDevice.Whatsapp !== Whatsapp) {
+
+                deviceMap.set(DeviceUID, {
+                    DeviceName, DeviceType, interval, PersonalEmail, Whatsapp, TriggerValue, Mail
+                });
+
+                //console.log(`Updated device settings for ${DeviceUID}`);
             }
-          });
         });
-  
-        const deviceEntry = fetchLatestEntryResult.length === 0 ? [defaultEntry] : fetchLatestEntryResult;
-        return { [DeviceUID]: { entry: deviceEntry } };
-      } catch (error) {
-        return { [DeviceUID]: { entry: [defaultEntry] } };
-      }
-    });
-  
-    const latestEntry = await Promise.all(promises);
-    res.json({ latestEntry });
-  } catch (error) {
-    res.status(500).json({ message: 'Error while fetching data for some devices', error });
-  }
+
+    } catch (error) {
+        console.error("Error fetching device data:", error);
+    }
 }
 
+async function processTrigger(deviceUID, payload) {
+    if (!deviceMap.has(deviceUID) || !payload) return;
+    const device = deviceMap.get(deviceUID);
+    const currentTime = Date.now();
+    const lastSentTime = lastSentMap.get(deviceUID) || 0;
 
-async function fetchLastSendMsgTime(req, res) {
-  try {
-    const deviceQuery = `
-      SELECT tms_trigger.DeviceUID, tms_trigger.ContactNO, tms_trigger.DeviceName, tms_trigger.TriggerValue, tms_trigger.interval, tms_trigger.Whatsapp  
-      FROM tms_trigger
-      JOIN tms_devices ON tms_trigger.DeviceUID = tms_devices.DeviceUID
-      WHERE tms_trigger.Whatsapp = 1;
-    `;
-  
-    const fetchLatestEntryQuery = `
-      SELECT * FROM tms_alert_interval WHERE DeviceUID = ? ORDER BY EntryID DESC LIMIT 1
-    `;
-  
-    const defaultEntry = {
-      id: 0,
-      DeviceUID: null,
-      lastSend: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-    };
-  
-    const devices = await new Promise((resolve, reject) => {
-      db.query(deviceQuery, (fetchUserDevicesError, devices) => {
-        if (fetchUserDevicesError) {
-          reject(fetchUserDevicesError);
-        } else {
-          resolve(devices);
-        }
-      });
-    });
-  
-    if (devices.length === 0) {
-      return res.status(404).json({ message: 'No devices found for the user' });
+    let temperature = null;
+    if ("Temperature" in payload) {
+        temperature = parseFloat(payload.Temperature);
+    } else if ("TemperatureR" in payload || "TemperatureY" in payload || "TemperatureB" in payload) {
+        temperature = Math.max(
+            payload.TemperatureR || 0,
+            payload.TemperatureY || 0,
+            payload.TemperatureB || 0
+        );
     }
-  
-    const promises = devices.map(async ({ DeviceUID }) => {
-      try {
-        const fetchLatestEntryResult = await new Promise((resolve, reject) => {
-          db.query(fetchLatestEntryQuery, [DeviceUID], (fetchLatestEntryError, result) => {
-            if (fetchLatestEntryError) {
-              reject(fetchLatestEntryError);
-            } else {
-              resolve(result);
-            }
-          });
-        });
-  
-        const deviceEntry = fetchLatestEntryResult.length === 0 ? [defaultEntry] : fetchLatestEntryResult;
-        return { [DeviceUID]: { entry: deviceEntry } };
-      } catch (error) {
-        return { [DeviceUID]: { entry: [defaultEntry] } };
-      }
-    });
-  
-    const latestEntry = await Promise.all(promises);
-    res.json({ latestEntry });
-  } catch (error) {
-    res.status(500).json({ message: 'Error while fetching data for some devices', error });
-  }
+
+    if (temperature === null || isNaN(temperature)) return;
+
+    let intervalMillis = device.interval * 60 * 1000;
+
+    if ((currentTime - lastSentTime) >= intervalMillis && temperature >= parseFloat(device.TriggerValue)) {
+        await sendAlert(device, temperature);
+        lastSentMap.set(deviceUID, currentTime);
+        console.log(`Alert sent for ${deviceUID} at ${new Date(currentTime)}`);
+    } else {
+        //console.log(`Trigger ignored for ${deviceUID}. Either interval not met or value below threshold.`);
+    }
 }
 
+async function sendAlert(device, temperature) {
+    if (!device.Mail || device.Mail === "0") {
+        //console.log(`Email alerts are disabled for ${deviceUID}.`);
+        return;
+    }
 
+    const formattedTimestamp = new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        day: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true,
+    }).format(new Date());
 
-module.exports = {
-  fetchLatestEntry,
-  fetchLastSendMsgTime
-};
+    const emailHtml = await ejs.renderFile("../mail-body/demo.ejs", {
+        deviceName: device.DeviceName,
+        thresholdTemp: device.TriggerValue,
+        currentTemp: temperature,
+        timestamp: formattedTimestamp
+    });
+
+    const mailOptions = {
+        from: "donotreplysenselive@gmail.com",
+        to: device.PersonalEmail,
+        subject: `Alert: Device ${device.DeviceName} Triggered`,
+        html: emailHtml
+    };
+
+    try {
+        const info = await transporter.sendMail(mailOptions);
+        //console.log(`Alert sent to ${device.PersonalEmail}:`, info.response);
+    } catch (error) {
+        //console.error(`Error sending email to ${device.PersonalEmail}:`, error);
+    }
+}
+
+const mqttClient = mqtt.connect(MQTT_BROKER, {
+    username: MQTT_USERNAME,
+    password: MQTT_PASSWORD
+});
+
+mqttClient.on("connect", () => {
+    console.log("Connected to MQTT Broker.");
+    mqttClient.subscribe("Sense/Live/#", err => {
+        if (err) console.error("Error subscribing to MQTT:", err);
+    });
+});
+
+mqttClient.on("message", (topic, message) => {
+    try {
+        const payload = JSON.parse(message.toString());
+        if (!payload || !payload.DeviceUID) return;
+        
+        //console.log(`Received MQTT data: ${payload.DeviceUID} => ${JSON.stringify(payload)}`);
+        processTrigger(payload.DeviceUID, payload);
+    } catch (error) {
+        //console.error("Error processing MQTT message:", error);
+    }
+});
+
+setInterval(fetchDeviceData, 10000);
+
+fetchDeviceData();
