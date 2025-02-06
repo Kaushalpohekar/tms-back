@@ -80,10 +80,6 @@ router.get('/userInfo', authenticateUser, SA.userInfo);
 router.get('/devInfo', authenticateUser, SA.deviceInfo);
 router.get('/compInfo', authenticateUser, SA.companyinfo);
 
-// Alert routes
-router.get('/forAlertData', authenticateUser, alert.fetchLatestEntry);
-router.get('/forAlertSend', authenticateUser, alert.fetchLastSendMsgTime);
-
 
 //newSa
 router.get('/fetchAllDevices', authenticateUser, newSa.fetchAllDevices);
