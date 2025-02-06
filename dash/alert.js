@@ -91,7 +91,7 @@ async function processTrigger(deviceUID, payload) {
     let intervalMillis = device.interval * 60 * 1000;
 
     if ((currentTime - lastSentTime) >= intervalMillis && temperature >= parseFloat(device.TriggerValue)) {
-        await sendAlert(device, temperature);
+        //await sendAlert(device, temperature);
         lastSentMap.set(deviceUID, currentTime);
         console.log(`Alert sent for ${deviceUID} at ${new Date(currentTime)}`);
     } else {
