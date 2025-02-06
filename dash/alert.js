@@ -58,7 +58,7 @@ const transporter = nodemailer.createTransport({
                     DeviceName, DeviceType, interval, PersonalEmail, Whatsapp, TriggerValue, Mail
                 });
 
-                //console.log(`Updated device settings for ${DeviceUID}`);
+                console.log(`Updated device settings for ${DeviceUID}`);
             }
         });
 
