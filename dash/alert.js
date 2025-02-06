@@ -91,7 +91,7 @@ async function processTrigger(deviceUID, payload) {
     let intervalMillis = device.interval * 60 * 1000;
 
     if ((currentTime - lastSentTime) >= intervalMillis && temperature >= parseFloat(device.TriggerValue)) {
-        //await sendAlert(device, temperature);
+        await sendAlert(device, temperature);
         lastSentMap.set(deviceUID, currentTime);
         console.log(`Alert sent for ${deviceUID} at ${new Date(currentTime)}`);
     } else {
@@ -143,6 +143,7 @@ async function sendAlert(device, temperature) {
     }
 
     const formattedTimestamp = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Asia/Kolkata",
         month: "short",
         day: "2-digit",
         year: "numeric",
@@ -170,7 +171,7 @@ async function sendAlert(device, temperature) {
 
         const mailOptions = {
             from: "donotreplysenselive@gmail.com",
-            to: device.PersonalEmail,
+            to: "kaushalpohekar85@gmail.com",//device.PersonalEmail,
             subject: `Alert: Device ${device.DeviceName} Triggered`,
             html: emailHtml,
         };
