@@ -35,6 +35,7 @@ const fs = require('fs');
 const bodyParser = require('body-parser');
 const https = require('https');
 const path = require('path');
+require('./dash/alert');
 
 const privateKey = fs.readFileSync('/etc/letsencrypt/live/senso.senselive.io/privkey.pem', 'utf8');
 const fullchain = fs.readFileSync('/etc/letsencrypt/live/senso.senselive.io/fullchain.pem', 'utf8');

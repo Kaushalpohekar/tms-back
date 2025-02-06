@@ -5,6 +5,7 @@ const fs = require('fs');
 const bodyParser = require('body-parser');
 const cron = require('node-cron');
 const path = require('path');
+require('./dash/alert');
 
 const app = express();
 const port = 4000;
