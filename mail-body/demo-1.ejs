@@ -32,6 +32,10 @@
             transition: transform 0.3s ease-in-out;
         }
 
+        /* .container:hover {
+            transform: scale(1.02);
+        } */
+
         .header {
             background: linear-gradient(135deg, #ff3b30, #ff8a00);
             padding: 2rem;
@@ -82,33 +86,49 @@
             box-shadow: inset 0px 0px 8px rgba(0, 0, 0, 0.05);
         }
 
-        .status-list {
-            list-style: none;
-            padding: 0;
-        }
-
-        .status-list li {
+        .status-item {
             display: flex;
             justify-content: space-between;
             padding: 0.75rem 0;
             border-bottom: 1px solid #e5e5e9;
-            font-size: 0.9rem;
-            font-weight: 550;
-            color: #1d1d1f;
+            font-size: 0.8rem;
         }
 
-        .status-list li:last-child {
+        .status-item:last-child {
             border-bottom: none;
         }
 
-        .status-list span:first-child {
+        .status-item span {
+            color: #1d1d1f;
+            font-weight: 550;
+        }
+
+        .status-item span:first-child {
             color: #888;
             font-weight: 400;
         }
 
-        .alert {
+        .status-item .alert {
             color: #ff3b30;
             font-weight: 600;
+        }
+
+        .action-button {
+            display: inline-block;
+            padding: 0.85rem 2.2rem;
+            background: linear-gradient(135deg, #0071e3, #0095ff);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 500;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 113, 227, 0.3);
+        }
+
+        .action-button:hover {
+            background: linear-gradient(135deg, #005bb5, #0071e3);
+            transform: scale(1.05);
         }
 
         .footer {
@@ -143,7 +163,7 @@
             }
 
             .content h2,
-            .status-list span {
+            .status-item span {
                 color: #f5f5f7;
             }
 
@@ -151,7 +171,7 @@
                 background: #333;
             }
 
-            .status-list span:first-child {
+            .status-item span:first-child {
                 color: #aaa;
             }
 
@@ -179,18 +199,29 @@
 
             <!-- Status Card -->
             <div class="status-card">
-                <ul class="status-list">
-                    <li><span>Device</span> <span>🏭 <%= deviceName %></span></li>
-                    <li><span>Current Temp</span> <span class="alert"><%= currentTemp %>°C 🔥</span></li>
-                    <li><span>Threshold</span> <span><%= thresholdTemp %>°C ⚠️</span></li>
-                    <li><span>Timestamp</span> <span><%= timestamp %> ⏱️</span></li>
-                </ul>
+                <div class="status-item">
+                    <span>Device</span>
+                    <span>🏭 <%= deviceName %></span>
+                </div>
+                <div class="status-item">
+                    <span>Current Temp</span>
+                    <span class="alert"><%= currentTemp %>°C 🔥</span>
+                </div>
+                <div class="status-item">
+                    <span>Threshold</span>
+                    <span><%= thresholdTemp %>°C ⚠️</span>
+                </div>
+                <div class="status-item">
+                    <span>Timestamp</span>
+                    <span><%= timestamp %> ⏱️</span>
+                </div>
             </div>
         </div>
 
         <!-- Footer -->
         <div class="footer">
             <p>This is an automated alert. <a href="https://senselive.io">SenseLive Technologies | 2025</a></p>
+            <!-- <a href="#">Unsubscribe</a> | <a href="#">Support</a> -->
         </div>
     </div>
 </body>
