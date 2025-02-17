@@ -189,9 +189,9 @@ const os = require('os');
 const broker = 'mqtt://broker.senselive.io:1883';
 
 const mysqlConfig = {
-  host: 'sl02-mysql.mysql.database.azure.com',
+  host: 'data.senselive.in',
   user: 'senselive',
-  password: 'SenseLive@2030',
+  password: 'SenseLive@2025',
   database: 'tms',
   ssl: {
     rejectUnauthorized: false,
