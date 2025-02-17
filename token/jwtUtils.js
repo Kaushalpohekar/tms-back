@@ -1,10 +1,13 @@
 const jwt = require('jsonwebtoken');
+const redis = require('redis');
 require('dotenv').config();
 
 const secretKey = process.env.JWT_SECRET_KEY || 'default-secret-key';
+const client = redis.createClient({ legacyMode: true });
+client.connect().catch(console.error); 
 
 function generateToken(payload, options = {}) {
-  const defaultOptions = { expiresIn: '1h' };
+  const defaultOptions = { expiresIn: '1h', algorithm: 'HS256' };
   return jwt.sign(payload, secretKey, { ...defaultOptions, ...options });
 }
 
