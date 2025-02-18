@@ -1735,55 +1735,109 @@ function editUser(req, res) {
 //       });
 //   });
 // }
-function fetchLatestEntry(req, res) {
+// function fetchLatestEntry(req, res) {
+//   const { companyEmail } = req.params;
+//   const optimizedQuery = `
+//     SELECT d.DeviceUID, ad.EntryID, ad.Temperature, ad.TemperatureR, ad.TemperatureY, ad.TemperatureB,
+//            ad.Humidity, ad.flowRate, ad.totalVolume, ad.TimeStamp, ad.ip_address, ad.status
+//     FROM tms_devices d
+//     LEFT JOIN (
+//       SELECT DeviceUID, MAX(EntryID) as MaxEntryID
+//       FROM actual_data
+//       GROUP BY DeviceUID
+//     ) latest_entry ON d.DeviceUID = latest_entry.DeviceUID
+//     LEFT JOIN actual_data ad ON latest_entry.MaxEntryID = ad.EntryID
+//     WHERE d.CompanyEmail = ?;
+//   `;
+
+//   const defaultEntry = {
+//     EntryID: 0,
+//     DeviceUID: null,
+//     Temperature: null,
+//     TemperatureR: null,
+//     TemperatureY: null,
+//     TemperatureB: null,
+//     Humidity: null,
+//     flowRate: null,
+//     totalVolume: null,
+//     TimeStamp: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+//     ip_address: "0.0.0.0",
+//     status: null
+//   };
+
+//   db.query(optimizedQuery, [companyEmail], (error, results) => {
+//     if (error) {
+//       return res.status(500).json({ message: 'Error while fetching data', error });
+//     }
+
+//     if (results.length === 0) {
+//       return res.status(404).json({ message: 'No devices found for the user' });
+//     }
+
+//     const latestEntries = results.map(result => {
+//       if (result.EntryID === null) {
+//         return { [result.DeviceUID]: { entry: [defaultEntry] } };
+//       }
+//       return { [result.DeviceUID]: { entry: [result] } };
+//     });
+
+//     res.json({ latestEntry: latestEntries });
+//   });
+// }
+const fetchLatestEntry = (req, res) => {
   const { companyEmail } = req.params;
+
+  // Optimized Query using MAX(TimeStamp) for latest entry retrieval
   const optimizedQuery = `
-    SELECT d.DeviceUID, ad.EntryID, ad.Temperature, ad.TemperatureR, ad.TemperatureY, ad.TemperatureB,
-           ad.Humidity, ad.flowRate, ad.totalVolume, ad.TimeStamp, ad.ip_address, ad.status
-    FROM tms_devices d
-    LEFT JOIN (
-      SELECT DeviceUID, MAX(EntryID) as MaxEntryID
-      FROM actual_data
-      GROUP BY DeviceUID
-    ) latest_entry ON d.DeviceUID = latest_entry.DeviceUID
-    LEFT JOIN actual_data ad ON latest_entry.MaxEntryID = ad.EntryID
-    WHERE d.CompanyEmail = ?;
+      WITH LatestEntries AS (
+          SELECT ad.DeviceUID, MAX(ad.TimeStamp) AS LatestTimeStamp
+          FROM actual_data ad FORCE INDEX (idx_device_timestamp)  -- Force efficient index use
+          WHERE ad.TimeStamp >= NOW() - INTERVAL 7 DAY  -- Partition Pruning for faster retrieval
+          GROUP BY ad.DeviceUID
+      )
+      SELECT d.DeviceUID, ad.EntryID, ad.Temperature, ad.TemperatureR, ad.TemperatureY, ad.TemperatureB,
+             ad.Humidity, ad.flowRate, ad.totalVolume, ad.TimeStamp, ad.ip_address, ad.status
+      FROM tms_devices d
+      LEFT JOIN LatestEntries le ON d.DeviceUID = le.DeviceUID
+      LEFT JOIN actual_data ad FORCE INDEX (idx_device_timestamp) 
+      ON ad.DeviceUID = le.DeviceUID AND ad.TimeStamp = le.LatestTimeStamp
+      WHERE d.CompanyEmail = ?;
   `;
 
   const defaultEntry = {
-    EntryID: 0,
-    DeviceUID: null,
-    Temperature: null,
-    TemperatureR: null,
-    TemperatureY: null,
-    TemperatureB: null,
-    Humidity: null,
-    flowRate: null,
-    totalVolume: null,
-    TimeStamp: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-    ip_address: "0.0.0.0",
-    status: null
+      EntryID: 0,
+      DeviceUID: null,
+      Temperature: null,
+      TemperatureR: null,
+      TemperatureY: null,
+      TemperatureB: null,
+      Humidity: null,
+      flowRate: null,
+      totalVolume: null,
+      TimeStamp: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+      ip_address: "0.0.0.0",
+      status: null
   };
 
   db.query(optimizedQuery, [companyEmail], (error, results) => {
-    if (error) {
-      return res.status(500).json({ message: 'Error while fetching data', error });
-    }
-
-    if (results.length === 0) {
-      return res.status(404).json({ message: 'No devices found for the user' });
-    }
-
-    const latestEntries = results.map(result => {
-      if (result.EntryID === null) {
-        return { [result.DeviceUID]: { entry: [defaultEntry] } };
+      if (error) {
+          return res.status(500).json({ message: 'Error while fetching data', error });
       }
-      return { [result.DeviceUID]: { entry: [result] } };
-    });
 
-    res.json({ latestEntry: latestEntries });
+      if (results.length === 0) {
+          return res.status(404).json({ message: 'No devices found for the user' });
+      }
+
+      const latestEntries = results.map(result => {
+          if (result.TimeStamp === null) {
+              return { [result.DeviceUID]: { entry: [defaultEntry] } };
+          }
+          return { [result.DeviceUID]: { entry: [result] } };
+      });
+
+      res.json({ latestEntry: latestEntries });
   });
-}
+};
 
 
 
