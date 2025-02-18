@@ -13,9 +13,9 @@ let deviceMap = new Map();
 let lastSentMap = new Map();
 
 const db = mysql.createPool({
-    host: "sl02-mysql.mysql.database.azure.com",
+    host: "data.senselive.in",
     user: "senselive",
-    password: "SenseLive@2030",
+    password: "SenseLive@2025",
     database: "tms",
     ssl: {
         rejectUnauthorized: false,
