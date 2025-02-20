@@ -4,15 +4,14 @@ const os = require('os');
 
 const broker = 'mqtt://broker.senselive.io:1883';
 
+
 const pgConfig = {
-  host: 'senselive.postgres.database.azure.com',
-  user: 'kaushal',
-  password: 'Kaushal@123',
-  database: 'ems',
+  host: 'data.senselive.in',
+  user: 'senselive',
+  password: 'SenseLive@2025',
+  database: 'senselive_db',
   port: 5432,
-  ssl: {
-    rejectUnauthorized: false,
-  },
+  ssl: { rejectUnauthorized: false },
 };
 
 const pgPool = new Pool(pgConfig);
