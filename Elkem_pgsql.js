@@ -2,7 +2,7 @@ const mqtt = require('mqtt');
 const { Pool } = require('pg'); // PostgreSQL client
 const os = require('os');
 
-const broker = 'mqtt://dashboard.senselive.io:1883';
+const broker = 'mqtt://dashboard.senselive.in:1883';
 
 
 const pgConfig = {

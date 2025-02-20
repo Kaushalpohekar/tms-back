@@ -186,7 +186,7 @@ const mqtt = require('mqtt');
 const mysql = require('mysql2');
 const os = require('os');
 
-const broker = 'mqtt://dashboard.senselive.io:1883';
+const broker = 'mqtt://dashboard.senselive.in:1883';
 
 const mysqlConfig = {
   host: 'data.senselive.in',
