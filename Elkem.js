@@ -238,6 +238,7 @@ const conditions = {
     { fields: ['field9'], deviceUID: 'SL_LoRa_00003_06', extraFields: ['level'] },
     { fields: ['field10', 'field11'], deviceUID: 'SL_LoRa_00003_07', extraFields: ['totalVolume', 'flowRate'] },
     { fields: ['field12'], deviceUID: 'SL_LoRa_00003_08', extraFields: ['level'] },
+    { fields: ['field13', 'field14'], deviceUID: 'SL_LoRa_00003_09', extraFields: ['totalVolume', 'flowRate'] },
   ],
   SL_LoRa_00004: [
     { fields: ['field1', 'field2'], deviceUID: 'SL_LoRa_00004_01', extraFields: ['totalVolume', 'flowRate'] },
