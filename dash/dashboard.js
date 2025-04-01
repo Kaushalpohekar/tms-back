@@ -1213,18 +1213,34 @@ async function getTotalVolumeForMonthEmail(req, res) {
     const fetchVolumeQuery = `
       SELECT 
         d.DeviceUID,
-        MAX(CASE WHEN MONTH(c.TimeStamp) = MONTH(CURDATE()) THEN c.totalVolume ELSE NULL END) - 
-        MIN(CASE WHEN MONTH(c.TimeStamp) = MONTH(CURDATE()) THEN c.totalVolume ELSE NULL END) AS thisMonthVolume,
-        MAX(CASE WHEN MONTH(c.TimeStamp) = MONTH(CURDATE() - INTERVAL 1 MONTH) THEN c.totalVolume ELSE NULL END) - 
-        MIN(CASE WHEN MONTH(c.TimeStamp) = MONTH(CURDATE() - INTERVAL 1 MONTH) THEN c.totalVolume ELSE NULL END) AS lastMonthVolume
-      FROM 
+        MAX(CASE 
+                WHEN MONTH(c.TimeStamp) = MONTH(CURDATE()) 
+                    AND YEAR(c.TimeStamp) = YEAR(CURDATE()) 
+                THEN c.totalVolume 
+            END) - 
+        MIN(CASE 
+                WHEN MONTH(c.TimeStamp) = MONTH(CURDATE()) 
+                    AND YEAR(c.TimeStamp) = YEAR(CURDATE()) 
+                THEN c.totalVolume 
+            END) AS thisMonthVolume,
+        MAX(CASE 
+                WHEN MONTH(c.TimeStamp) = MONTH(CURDATE() - INTERVAL 1 MONTH) 
+                    AND YEAR(c.TimeStamp) = YEAR(CURDATE() - INTERVAL 1 MONTH) 
+                THEN c.totalVolume 
+            END) - 
+        MIN(CASE 
+                WHEN MONTH(c.TimeStamp) = MONTH(CURDATE() - INTERVAL 1 MONTH) 
+                    AND YEAR(c.TimeStamp) = YEAR(CURDATE() - INTERVAL 1 MONTH) 
+                THEN c.totalVolume 
+            END) AS lastMonthVolume
+    FROM 
         tms_devices d
-      LEFT JOIN 
+    LEFT JOIN 
         clean_data c ON d.DeviceUID = c.DeviceUID
-      WHERE 
-        d.CompanyEmail = ? 
+    WHERE 
+        d.CompanyEmail = ?
         AND d.DeviceType IN ('ws', 'fs', 'ts')
-      GROUP BY 
+    GROUP BY 
         d.DeviceUID;
     `;
 
