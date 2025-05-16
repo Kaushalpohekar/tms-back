@@ -67,9 +67,9 @@ mqttClient.on('message', (topic, message) => {
     const insertValues = [
       data.DeviceUID,
       data.Temperature,
-      data.TemperatureR,
-      data.TemperatureY,
-      data.TemperatureB,
+      data.TemperatureR || data.Temp1,
+      data.TemperatureY || data.Temp2,
+      data.TemperatureB || data.Temp3,
       data.Humidity,
       data.flowRate || data.FlowRate || data.Level || data.level,
       data.Pressure,
