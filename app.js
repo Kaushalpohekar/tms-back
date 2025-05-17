@@ -15,7 +15,7 @@ const credentials = { key: privateKey, cert: fullchain };
 const app = express();
 const port = 3000;
 
-const allowedOrigins = ['https://senso.senselive.io', 'senso.senselive.io', 'https://trumen.senselive.io', 'trumen.senselive.io'];
+const allowedOrigins = ['https://senso.senselive.io', 'senso.senselive.io', 'https://trumen.senselive.in', 'trumen.senselive.in'];
 
 // const corsOptions = {
 //   origin: (origin, callback) => {
