@@ -532,6 +532,7 @@ function resendToken(req, res) {
 
 
 function login(req, res) {
+  console.log(req.body);
   const { Username, Password } = req.body;
 
   // Generate a UUID for tenant_id

@@ -96,7 +96,7 @@ mqttClient.on('message', (topic, message) => {
     const Collecteddata = JSON.parse(message);
 
     const processNodeData = (nodeData, nodeName) => {
-      const data = nodeData.Payload?.payload?.modbusData || nodeData.payload?.modbusData || '';
+      const data = nodeData.Payload?.payload?.modbusData || nodeData.payload?.modbusData || nodeData.Payload?.Payload  || '';
 
       const isValidData = (value) => value !== null && value !== undefined && value !== '' && !isNaN(value);
 
