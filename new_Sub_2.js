@@ -197,7 +197,7 @@ mqttClient.on('message', (topic, message) => {
       if (deviceId) {
         mysqlPool.query(insertQuery, insertValues, (error) => {
           if (!error) {
-            console.log('Data stored for device:', deviceId);
+            //console.log('Data stored for device:', deviceId);
           }
         });
       }
