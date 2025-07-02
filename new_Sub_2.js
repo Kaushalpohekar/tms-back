@@ -160,7 +160,23 @@ mqttClient.on('connect', () => {
 mqttClient.on('message', (topic, message) => {
   try {
     const payload = JSON.parse(message);
-    const devices = Array.isArray(payload.devices) ? payload.devices : [payload];
+    const devices = [];
+
+    if (payload.DeviceUID) {
+      devices.push(payload);
+    }
+
+    for (const key in payload) {
+      const val = payload[key];
+      if (
+        typeof val === 'object' &&
+        val !== null &&
+        val.DeviceUID &&
+        (val.FlowRate !== undefined || val.Totalizer !== undefined)
+      ) {
+        devices.push(val);
+      }
+    }
 
     devices.forEach((data) => {
       const insertQuery = `
@@ -186,7 +202,7 @@ mqttClient.on('message', (topic, message) => {
         getUniversalValue(data, ['TemperatureY', 'Temp2']),
         getUniversalValue(data, ['TemperatureB', 'Temp3']),
         getUniversalValue(data, ['Humidity']),
-        getUniversalValue(data, ['FlowRate', 'Level']),
+        getUniversalValue(data, ['FlowRate', 'flow_rate', 'Level', 'level']),
         getUniversalValue(data, ['Pressure']),
         getUniversalValue(data, ['Totalizer', 'TotalVolume']),
         localIpAddress
@@ -197,7 +213,7 @@ mqttClient.on('message', (topic, message) => {
       if (deviceId) {
         mysqlPool.query(insertQuery, insertValues, (error) => {
           if (!error) {
-            //console.log('Data stored for device:', deviceId);
+            console.log('Data stored for device:', deviceId);
           }
         });
       }
